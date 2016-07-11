@@ -53,11 +53,13 @@
     $(".messages").niceScroll(lol);
     $("#texxt").keypress(function(e) {
       if (e.keyCode === 13) {
+        sendMessage();
         insertI();
         return false;
       }
     });
     return $(".send").click(function() {
+      sendMessage();
       return insertI();
     });
   });

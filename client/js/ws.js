@@ -6,7 +6,7 @@ socket.onopen = function() {
 };
 
 function sendMessage() {
-    text = $('#texxt').value
+    text = $('#texxt').val()
     msg = {
         Type: "SendMessage",
         Messages: [{
