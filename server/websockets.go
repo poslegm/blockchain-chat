@@ -4,21 +4,25 @@ import (
 	"net/http"
 	"github.com/gorilla/websocket"
 	"fmt"
+	"time"
+	"github.com/poslegm/blockchain-chat/network"
+	"github.com/poslegm/blockchain-chat/db"
 )
 
-// сообщения для веб-сокета:
-// запрос на получение всех сообщений (которые можно расшифровать)
-// запрос на отправку сообщения (набранный текст + ключ получателя)
-// запрос на состояние майнинга (решить, что какое там может быть состояние; время?)
-
 type WebSocketMessage struct {
-	Command string
-	Value string
+	Type     string
+	Messages []ChatMessage
+}
+
+type ChatMessage struct {
+	Receiver string
+	Sender string
+	Text string
 }
 
 func receive(ws *websocket.Conn) {
 	// чтение не должно прекращаться
-	ws.SetReadDeadline(0)
+	ws.SetReadDeadline(time.Time{})
 
 	defer ws.Close()
 	for {
@@ -30,8 +34,50 @@ func receive(ws *websocket.Conn) {
 			return
 		}
 
-		fmt.Printf("WebSocket.receive: message %#v\n", msg)
+		msg.switchTypes(ws)
 	}
+}
+
+func (msg WebSocketMessage) switchTypes(ws *websocket.Conn) {
+	switch msg.Type {
+	case "GetMessages":
+		networkMessages := db.GetAllMessages()
+
+		chatMessages := make([]ChatMessage, 0)
+		for _, networkMsg := range networkMessages {
+			chatMessages = append(chatMessages, ChatMessage{
+				networkMsg.Receiver, networkMsg.Sender, networkMsg.Text,
+			})
+		}
+
+		sendMessage(WebSocketMessage{"AllMessages", chatMessages}, ws)
+	case "SendMessage":
+		if len(msg.Messages) != 1 {
+			fmt.Printf("WebSocket.switchTypes: incorrect message - %#v\n", msg)
+			return
+		}
+		chatMsg := msg.Messages[0]
+		status := network.SendMessage(network.NetworkMessage{
+			chatMsg.Receiver,
+			chatMsg.Sender,
+			chatMsg.Text,
+		})
+
+		if status {
+			sendMessage(WebSocketMessage{"MessageSent", nil}, ws)
+		} else {
+			sendMessage(WebSocketMessage{"MessageNotSent", nil}, ws)
+		}
+	}
+}
+
+func sendMessage(msg WebSocketMessage, ws *websocket.Conn) {
+	go func() {
+		err := ws.WriteJSON(&msg)
+		if err != nil {
+			fmt.Println("WebSocket.sendMessage: " + err.Error())
+		}
+	}()
 }
 
 func createConnection(ws *websocket.Conn) {

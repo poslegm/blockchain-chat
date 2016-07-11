@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Blockchain messenger</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-
+ 	<script src="js/ws.js"></script>
     <link rel="stylesheet" href="css/normalize.css">
 	<link rel="stylesheet" href="css/style.css">
   </head>
@@ -57,13 +57,12 @@
 			</ul>
 			<div class="write-form">
 				<textarea placeholder="Текст сообщения" name="e" id="texxt"  rows="2"></textarea>
-				<span class="send">отправить</span>
+				<span class="send" onclick="sendMessage();">отправить</span>
 			</div>
 		</div>
 	</div>
     <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
 	<script src='http://cdnjs.cloudflare.com/ajax/libs/nicescroll/3.5.4/jquery.nicescroll.js'></script>
 	<script src="js/index.js"></script>
-	<script src="js/ws.js"></script>
   </body>
 </html>
