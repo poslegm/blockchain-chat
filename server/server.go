@@ -31,29 +31,26 @@ func createPathHandler(rootDir string) http.HandlerFunc {
 		resp.Header().Add("Content-Type", mime.TypeByExtension(ext))
 
 		content, err := ioutil.ReadFile(path.Join(rootDir, dir, file))
-		if err != nil {
+		if err != nil || content == nil {
 			fmt.Println(err.Error())
+			resp.WriteHeader(404)
+			resp.Write([]byte{})
 			return
 		}
 
-		if content == nil {
-			resp.WriteHeader(404)
-			resp.Write([]byte{})
-		} else {
-			resp.Write(content)
-		}
+		resp.Write(content)
 	}
 }
 
 // Запускает файловый сервер на порту port, считая корневой директорией htmlDir
 func Run(rootDir string, port string) {
-	r := mux.NewRouter()
+	router := mux.NewRouter()
 
 	//r.Methods("GET").Path("/websocket").HandlerFunc(api.WebsocketHandler(srv, log))
-	r.Methods("GET").Path("/").HandlerFunc(createIndexHandler(rootDir))
-	r.Methods("GET").Path("/{dir}/{path}").HandlerFunc(createPathHandler(rootDir))
+	router.Methods("GET").Path("/").HandlerFunc(createIndexHandler(rootDir))
+	router.Methods("GET").Path("/{dir}/{path}").HandlerFunc(createPathHandler(rootDir))
 
-	http.Handle("/", r)
+	http.Handle("/", router)
 
 	err := http.ListenAndServe("127.0.0.1:" + port, nil)
 	if err != nil {
