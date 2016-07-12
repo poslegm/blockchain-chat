@@ -7,11 +7,11 @@ import (
 
 type NetAddress struct {
 	//last online time of peer
-	lastseen time.Time;
+	Lastseen time.Time;
 
 	//peer's ip address
-	ip net.IP
+	Ip net.IP
 
 	//peer's port
-	port uint16
+	Port uint16
 }
