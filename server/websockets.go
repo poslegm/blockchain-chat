@@ -19,7 +19,7 @@ type ChatMessage struct {
 	Sender string
 	Text string
 }
-
+// TODO вкл/выкл майнинга
 func receive(ws *websocket.Conn) {
 	// чтение не должно прекращаться
 	ws.SetReadDeadline(time.Time{})
@@ -57,17 +57,11 @@ func (msg WebSocketMessage) switchTypes(ws *websocket.Conn) {
 			return
 		}
 		chatMsg := msg.Messages[0]
-		status := network.SendMessage(network.NetworkMessage{
+		network.CurrentNetworkUser.SendMessage(network.NetworkMessage{
 			chatMsg.Receiver,
 			chatMsg.Sender,
 			chatMsg.Text,
 		})
-
-		if status {
-			sendMessage(WebSocketMessage{"MessageSent", nil}, ws)
-		} else {
-			sendMessage(WebSocketMessage{"MessageNotSent", nil}, ws)
-		}
 	}
 }
 
