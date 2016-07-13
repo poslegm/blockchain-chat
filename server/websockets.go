@@ -61,11 +61,11 @@ func (msg WebSocketMessage) switchTypes(ws *websocket.Conn) {
 			return
 		}
 		chatMsg := msg.Messages[0]
-		go network.CurrentNetworkUser.SendMessage(network.NetworkMessage{
-			Receiver:chatMsg.Receiver,
-			Sender:chatMsg.Sender,
-			Text: chatMsg.Text,
-		})
+		go network.CurrentNetworkUser.SendMessage(network.CreateTextMessage(
+			chatMsg.Receiver,
+			chatMsg.Sender,
+			chatMsg.Text,
+		))
 	}
 }
 

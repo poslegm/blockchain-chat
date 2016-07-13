@@ -19,5 +19,6 @@ function sendMessage() {
 }
 
 socket.onmessage = function(event) {
-    console.log(event.data);
+    var message = JSON.parse(event.data);
+    console.log(message);
 };

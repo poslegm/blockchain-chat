@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"time"
 )
+// TODO запись публичных ключей в базе
+// TODO полноценный обмен данными с клиентом
 
 func main() {
 	err := db.InitDB()

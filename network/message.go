@@ -13,3 +13,11 @@ type NetworkMessage struct {
 	Sender string
 	Text string
 }
+
+func CreateTextMessage(receiver, sender, text string) NetworkMessage {
+	return NetworkMessage{
+		Receiver:receiver,
+		Sender:sender,
+		Text:text,
+	}
+}
