@@ -2,7 +2,6 @@ package network
 
 import (
 	"time"
-	"net"
 )
 
 type NetAddress struct {
@@ -10,8 +9,8 @@ type NetAddress struct {
 	Lastseen time.Time;
 
 	//peer's ip address
-	Ip net.IP
+	Ip string
 
 	//peer's port
-	Port uint16
+	Port string
 }

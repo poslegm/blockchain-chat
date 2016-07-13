@@ -5,15 +5,16 @@ import (
 	"github.com/poslegm/blockchain-chat/db"
 	"github.com/poslegm/blockchain-chat/network"
 	"fmt"
+	"time"
 )
 
 func main() {
-	server.Run("./client", "8080")
 	err := db.InitDB()
 	if err != nil {
 		fmt.Println("main.Run: can't init database ", err.Error())
 		return
 	}
+
 	err = network.Run()
 	if err != nil {
 		fmt.Println("main.Run: can't run network ", err.Error())
@@ -21,7 +22,9 @@ func main() {
 	}
 
 	go createConnectQueue()
-	go handleIncomingMessage()
+	go handleNetworkChans()
+
+	server.Run("./client", "8080")
 }
 
 func createConnectQueue() {
@@ -31,15 +34,21 @@ func createConnectQueue() {
 	}
 
 	for _, address := range knownAdresses {
-		network.CurrentNetworkUser.ConnectQueue <- address.Ip.String()
+		network.CurrentNetworkUser.ConnectQueue <- address.Ip
 	}
 }
 
-func handleIncomingMessage() {
+func handleNetworkChans() {
 	for {
 		select {
 		case msg := <- network.CurrentNetworkUser.IncomingMessages:
 			db.AddMessages([]network.NetworkMessage{msg})
+		case address := <- network.CurrentNetworkUser.NewNodes:
+			db.AddKnownAddresses([]network.NetAddress{{
+				time.Now(),
+				address,
+				network.TCPPort,
+			}})
 		}
 	}
 }

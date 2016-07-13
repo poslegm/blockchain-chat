@@ -24,13 +24,12 @@ func (n Node) send(msg NetworkMessage) (int, error) {
 	return n.tcp.Write(marshallMsg)
 }
 
-// TODO когда пользователь подключается к сети, его адрес должен быть отправлен всем нодам
-
 type NetworkUser struct {
-	Nodes 		   map[string]*Node
+	Nodes 		   map[string]*Node // контакты
 	Address 	   string
-	ConnectQueue	   chan string
-	IncomingMessages   chan NetworkMessage
+	ConnectQueue	   chan string // очередь на отправку запросов соединения
+	IncomingMessages   chan NetworkMessage // входящие для добавления в базу
+	NewNodes           chan string // адреса новых соединений для добавления в базу
 }
 
 var CurrentNetworkUser *NetworkUser = new(NetworkUser)
@@ -47,7 +46,7 @@ func setupNetwork(address string) *NetworkUser {
 // добавляет узел и запускает горутину на его прослушивание
 func (networkUser *NetworkUser) addNode(node *Node) {
 	if node.key != networkUser.Address && networkUser.Nodes[node.key] == nil {
-		fmt.Println("Node connected", node.key)
+		fmt.Println("Node connected ", node.key)
 		networkUser.Nodes[node.key] = node
 
 		go node.listen(networkUser)
@@ -125,6 +124,7 @@ func (networkUser *NetworkUser) listenTCPRequests() {
 		}
 
 		networkUser.addNode(&Node{connection, connection.RemoteAddr().String()})
+		networkUser.NewNodes <- connection.RemoteAddr().String()
 	}
 }
 
@@ -185,8 +185,8 @@ func currentAddress() (string, error) {
 		return "", err
 	}
 
-	fmt.Println("Network.currentAddress: address ", address)
-	return address[0] + ":" + TCPPort, nil
+	fmt.Println("Network.currentAddress: address ", address[1])
+	return address[1] + ":" + TCPPort, nil
 }
 
 func Run() error {
