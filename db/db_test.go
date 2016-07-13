@@ -4,21 +4,19 @@ import (
 	"testing"
 	"github.com/poslegm/blockchain-chat/network"
 	"fmt"
-	"time"
-	"net"
 )
 
 func TestDB(t *testing.T) {
 	InitDB()
 	msgs := []network.NetworkMessage{
-		network.NetworkMessage{"1", "2", "3"},
-		network.NetworkMessage{"4", "5", "6"},
-		network.NetworkMessage{"7", "8", "9"},
+		network.NetworkMessage{},
+		network.NetworkMessage{},
+		network.NetworkMessage{},
 	}
 	addrs := []network.NetAddress{
-		network.NetAddress{time.Time{}, net.IPv4(1, 2, 3, 4), 10},
-		network.NetAddress{time.Time{}, net.IPv4(1, 2, 3, 4), 15},
-		network.NetAddress{time.Time{}, net.IPv4(1, 2, 3, 4), 15},
+		network.NetAddress{},
+		network.NetAddress{},
+		network.NetAddress{},
 	}
 	AddKnownAddresses(addrs)
 	AddMessages(msgs)

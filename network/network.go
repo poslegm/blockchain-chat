@@ -6,7 +6,6 @@ import (
 	"io"
 	"encoding/json"
 	"os"
-	"math/rand"
 )
 
 const TCPPort string = "9005"
@@ -195,7 +194,16 @@ func currentAddress() (string, error) {
 		return "", err
 	}
 
-	addrId := rand.Intn(len(address))
+	addrId := 0
+	if len(address) != 1 {
+		for i, addr := range address {
+			binAddr := net.ParseIP(addr)
+			if(binAddr != nil && len(binAddr) == 4) {
+				addrId = i
+				break
+			}
+		}
+	}
 	fmt.Println("Network.currentAddress: address ", address[addrId])
 	return address[addrId] + ":" + TCPPort, nil
 }

@@ -13,24 +13,24 @@ var db *bolt.DB;
 var (
 	knownAddresses = []byte("knownAddresses")
 	messages = []byte("messages")
+	blocks = []byte("blocks")
 	baseName = "data.db"
+	neededBuckets = [][]byte{knownAddresses, messages, blocks}
 )
 
 //database initialization, creating top-level buckets if they are not present
 //func InitDB(path string, mode os.FileMode, options *bolt.Options) (err error) {
-func InitDB() (err error ) {
+func InitDB() (err error) {
 	db, err = bolt.Open(baseName, 0660, nil)
 	if (err != nil) {
 		return err
 	}
 	return db.Update(func(tx *bolt.Tx) error {
-		_, terr := tx.CreateBucketIfNotExists(knownAddresses)
-		if (terr != nil) {
-			return fmt.Errorf("create bucket: %s", terr)
-		}
-		_, terr = tx.CreateBucketIfNotExists(messages)
-		if (terr != nil) {
-			return fmt.Errorf("create bucket: %s", terr)
+		for _, bucket := range neededBuckets {
+			_, terr := tx.CreateBucketIfNotExists(bucket)
+			if (terr != nil) {
+				return fmt.Errorf("create bucket %s: %s", bucket, terr)
+			}
 		}
 		return nil
 	})
