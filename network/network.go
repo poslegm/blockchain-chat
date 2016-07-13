@@ -6,6 +6,7 @@ import (
 	"io"
 	"encoding/json"
 	"os"
+	"math/rand"
 )
 
 const TCPPort string = "9005"
@@ -194,8 +195,9 @@ func currentAddress() (string, error) {
 		return "", err
 	}
 
-	fmt.Println("Network.currentAddress: address ", address[1])
-	return address[1] + ":" + TCPPort, nil
+	addrId := rand.Intn(len(address))
+	fmt.Println("Network.currentAddress: address ", address[addrId])
+	return address[addrId] + ":" + TCPPort, nil
 }
 
 func Run() error {
