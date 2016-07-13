@@ -21,14 +21,14 @@ func TestDB(t *testing.T) {
 	AddKnownAddresses(addrs)
 	AddMessages(msgs)
 	gm, err := GetAllMessages()
-	if(err != nil) {
+	if (err != nil) {
 		t.Errorf("%s", err)
 	}
 	for _, v := range gm {
 		fmt.Println(v)
 	}
 	ga, err := GetKnownAddresses()
-	if(err != nil) {
+	if (err != nil) {
 		t.Errorf("%s", err)
 	}
 	for _, v := range ga {

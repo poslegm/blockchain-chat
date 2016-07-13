@@ -11,11 +11,13 @@ import (
 var db *bolt.DB;
 
 var (
-	knownAddresses = []byte("knownAddresses")
-	messages = []byte("messages")
-	blocks = []byte("blocks")
-	baseName = "data.db"
-	neededBuckets = [][]byte{knownAddresses, messages, blocks}
+	knownAddresses = []byte("knownAddresses") //addresses of known network peers
+	messages = []byte("messages") //stored messages
+	blocks = []byte("blocks") //stored blockchain blocks
+	keys = []byte("keys") //user's encryption keys
+	contacts = []byte("contacts") //contact list
+	baseName = "data.db" //database file name
+	neededBuckets = [][]byte{knownAddresses, messages, blocks, keys, contacts} //needed buckets
 )
 
 //database initialization, creating top-level buckets if they are not present
@@ -26,6 +28,7 @@ func InitDB() (err error) {
 		return err
 	}
 	return db.Update(func(tx *bolt.Tx) error {
+		//create bucket for each needed
 		for _, bucket := range neededBuckets {
 			_, terr := tx.CreateBucketIfNotExists(bucket)
 			if (terr != nil) {
@@ -54,6 +57,7 @@ func GetKnownAddresses() (data []network.NetAddress, err error) {
 	return
 }
 
+//convert int to byte array
 func itob(v int) []byte {
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, uint64(v))
@@ -100,7 +104,7 @@ func AddMessages(data []network.NetworkMessage) error {
 	})
 }
 
-//get saved messages
+//get stored messages
 func GetAllMessages() (data []network.NetworkMessage, err error) {
 	err = db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(messages)
