@@ -9,9 +9,13 @@ const REQUEST = "REQUEST"
 type NetworkMessage struct {
 	MessageType string
 	IP string
+
+	// TODO убрать и использовть дату
 	Receiver string
 	Sender string
 	Text string
+
+	data []byte
 }
 
 func CreateTextMessage(receiver, sender, text string) NetworkMessage {
