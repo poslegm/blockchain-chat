@@ -116,8 +116,4 @@ func GetAllMessages() (data []network.NetworkMessage, err error) {
 		return nil
 	})
 	return
-	//return []network.NetworkMessage{
-	//	network.NetworkMessage{"Букер", "VS94SKI", "KEK"},
-	//	network.NetworkMessage{"VS94SKI", "Букер", "CHPEK"},
-	//}
 }

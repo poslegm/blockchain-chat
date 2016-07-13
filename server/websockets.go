@@ -41,7 +41,11 @@ func receive(ws *websocket.Conn) {
 func (msg WebSocketMessage) switchTypes(ws *websocket.Conn) {
 	switch msg.Type {
 	case "GetMessages":
-		networkMessages := db.GetAllMessages()
+		networkMessages, err := db.GetAllMessages()
+		if err != nil {
+			fmt.Println("Websockets.switchTypes: ", err.Error())
+			return
+		}
 
 		chatMessages := make([]ChatMessage, 0)
 		for _, networkMsg := range networkMessages {
