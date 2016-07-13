@@ -197,9 +197,11 @@ func currentAddress() (string, error) {
 	addrId := 0
 	if len(address) != 1 {
 		for i, addr := range address {
-			binAddr := net.ParseIP(addr)
+			binAddr := net.ParseIP(addr).To4()
+
 			if(binAddr != nil && len(binAddr) == 4) {
 				addrId = i
+				fmt.Println(binAddr, i, address[i])
 				break
 			}
 		}
