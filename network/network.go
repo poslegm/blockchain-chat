@@ -14,6 +14,7 @@ type Node struct {
 	tcp *net.TCPConn
 	key string // TCP address
 }
+// TODO покрыть тестами
 
 func (n Node) send(msg NetworkMessage) (int, error) {
 	marshallMsg, err := json.Marshal(msg)
@@ -78,7 +79,11 @@ func (node *Node) listen(networkUser *NetworkUser) {
 			continue
 		}
 
-		networkUser.IncomingMessages <- *msg
+		switch msg.MessageType {
+		case MESSAGE: networkUser.IncomingMessages <- *msg
+		case REQUEST: networkUser.ConnectQueue <- msg.IP
+		}
+
 	}
 }
 
@@ -125,6 +130,10 @@ func (networkUser *NetworkUser) listenTCPRequests() {
 
 		networkUser.addNode(&Node{connection, connection.RemoteAddr().String()})
 		networkUser.NewNodes <- connection.RemoteAddr().String()
+		go networkUser.SendMessage(NetworkMessage{
+			MessageType:REQUEST,
+			IP:connection.RemoteAddr().String(),
+		})
 	}
 }
 
