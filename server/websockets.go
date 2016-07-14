@@ -9,9 +9,12 @@ import (
 	"github.com/poslegm/blockchain-chat/db"
 )
 
+var WebSocketQueue = make(chan WebSocketMessage)
+
 type WebSocketMessage struct {
 	Type     string
 	Messages []ChatMessage
+	Key string
 }
 
 type ChatMessage struct {
@@ -19,28 +22,34 @@ type ChatMessage struct {
 	Sender string
 	Text string
 }
-// TODO вкл/выкл майнинга
+
 func receive(ws *websocket.Conn) {
 	// чтение не должно прекращаться
 	ws.SetReadDeadline(time.Time{})
 
-	defer ws.Close()
 	for {
+		fmt.Println("KEK")
 		msg := WebSocketMessage{}
 
 		err := ws.ReadJSON(&msg)
 		if err != nil {
-			fmt.Println("WebSockets.receive json: " + err.Error())
-			return
+			fmt.Println("WebSockets.receive: " + err.Error())
+			break
 		}
 
-		msg.switchTypes(ws)
+		msg.switchTypes()
 	}
+	fmt.Println("Выход из цикла")
+	ws.Close()
 }
 
-func (msg WebSocketMessage) switchTypes(ws *websocket.Conn) {
+// выбирает ответ на сообщение в зависимости от типа и кладёт его в очередь сообщений
+func (msg WebSocketMessage) switchTypes() {
+	fmt.Println("Websockets.swithTypes: ", msg)
+
 	switch msg.Type {
 	case "GetMessages":
+		// TODO выводить только сообщения, которые можно расшифровать
 		networkMessages, err := db.GetAllMessages()
 		if err != nil {
 			fmt.Println("Websockets.switchTypes: ", err.Error())
@@ -54,7 +63,7 @@ func (msg WebSocketMessage) switchTypes(ws *websocket.Conn) {
 			})
 		}
 
-		sendMessage(WebSocketMessage{"AllMessages", chatMessages}, ws)
+		WebSocketQueue <- WebSocketMessage{Type:"AllMessages", Messages:chatMessages}
 	case "SendMessage":
 		if len(msg.Messages) != 1 {
 			fmt.Printf("WebSocket.switchTypes: incorrect message - %#v\n", msg)
@@ -66,20 +75,31 @@ func (msg WebSocketMessage) switchTypes(ws *websocket.Conn) {
 			chatMsg.Sender,
 			chatMsg.Text,
 		))
+	case "GetMyKey":
+		WebSocketQueue <- WebSocketMessage{Type:"Key", Key:db.GetPublicKey()}
 	}
 }
 
-func sendMessage(msg WebSocketMessage, ws *websocket.Conn) {
-	go func() {
-		err := ws.WriteJSON(&msg)
-		if err != nil {
-			fmt.Println("WebSocket.sendMessage: " + err.Error())
+func handleMessagesQueue(ws *websocket.Conn) {
+	for {
+		select {
+		case msg := <- WebSocketQueue:
+			ws.SetWriteDeadline(time.Now().Add(30 * time.Second))
+			err := ws.WriteJSON(&msg)
+			if err != nil {
+				fmt.Println("WebSocket.handleMessagesQueue: " + err.Error())
+				// если сообщение не удалось отправить, оно добавляется обратно в конец очереди
+				WebSocketQueue <- msg
+			} else {
+				fmt.Println("WebSocket.handleMessagesQueue: sended ", msg)
+			}
 		}
-	}()
+	}
 }
 
 func createConnection(ws *websocket.Conn) {
 	go receive(ws)
+	go handleMessagesQueue(ws)
 }
 
 func createWSHandler() http.HandlerFunc {

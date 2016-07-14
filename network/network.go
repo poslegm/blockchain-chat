@@ -30,6 +30,7 @@ type NetworkUser struct {
 	Address 	   string
 	ConnectQueue	   chan string // очередь на отправку запросов соединения
 	IncomingMessages   chan NetworkMessage // входящие для добавления в базу
+	OutgoingMessages   chan NetworkMessage
 	NewNodes           chan string // адреса новых соединений для добавления в базу
 }
 
@@ -41,6 +42,7 @@ func setupNetwork(address string) *NetworkUser {
 	networkUser.Address = address
 	networkUser.ConnectQueue = make(chan string)
 	networkUser.IncomingMessages = make(chan NetworkMessage)
+	networkUser.OutgoingMessages = make(chan NetworkMessage)
 	return networkUser
 }
 
@@ -171,6 +173,8 @@ func (networkUser *NetworkUser) setConnection(address string) {
 func (network *NetworkUser) SendMessage(msg NetworkMessage) {
 	fmt.Printf("Network.SendMessage: %#v\n", msg)
 
+	network.OutgoingMessages <- msg
+
 	for k, node := range network.Nodes {
 		fmt.Println("Broadcasting...", k)
 
@@ -201,7 +205,6 @@ func currentAddress() (string, error) {
 
 			if(binAddr != nil && len(binAddr) == 4) {
 				addrId = i
-				fmt.Println(binAddr, i, address[i])
 				break
 			}
 		}

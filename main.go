@@ -9,7 +9,9 @@ import (
 )
 // TODO запись публичных ключей в базе
 // TODO полноценный обмен данными с клиентом
-
+// TODO хранить свои ключи
+// TODO хранить отправленные сообщения
+// TODO следить за закрытием веб-сокета
 func main() {
 	err := db.InitDB()
 	if err != nil {
@@ -51,6 +53,8 @@ func handleNetworkChans() {
 				address,
 				network.TCPPort,
 			}})
+		case msg := <- network.CurrentNetworkUser.OutgoingMessages:
+			db.AddMessages([]network.NetworkMessage{msg})
 		}
 	}
 }

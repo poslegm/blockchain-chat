@@ -117,3 +117,7 @@ func GetAllMessages() (data []network.NetworkMessage, err error) {
 	})
 	return
 }
+
+func GetPublicKey() string {
+	return "123456789"
+}
