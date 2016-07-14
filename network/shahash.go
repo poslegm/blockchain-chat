@@ -16,7 +16,7 @@ const HashStringSize = HashSize * 2
 type ShaHash [HashSize]byte
 
 //convert hash to string
-func (hash ShaHash) String() string {
+func (hash *ShaHash) String() string {
 	return hex.EncodeToString(hash[:])
 }
 

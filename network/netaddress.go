@@ -14,3 +14,7 @@ type NetAddress struct {
 	//peer's port
 	Port string
 }
+
+func CreateNetAddress(lastseen time.Time, ip, port string) NetAddress {
+	return NetAddress{Lastseen:lastseen, Ip:ip, Port:port}
+}
