@@ -1,5 +1,5 @@
 (function() {
-  var NYLM, claerResizeScroll, conf, getRandomInt, insertI, lol;
+  var claerResizeScroll, conf, getRandomInt, insertI, lol;
 
   conf = {
     cursorcolor: "#696c75",

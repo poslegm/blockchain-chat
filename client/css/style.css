@@ -71,6 +71,7 @@ body {
 }
 .info {
     margin: 10px;
+    cursor: pointer;
 }
 .ui .chat .info {
   display: -webkit-inline-box;
