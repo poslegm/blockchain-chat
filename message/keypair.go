@@ -6,19 +6,24 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"golang.org/x/crypto/openpgp"
+	"crypto/md5"
 )
 
 //gpg key pair
 type KeyPair struct {
 	//gpg pub key
-	PublicKey []byte
+	PublicKey  []byte
 
 	//gpg private key
 	PrivateKey []byte
+
+	//gpg private key passphrase
+	Passphrase []byte
 }
 
 //encode data using kp's public key
-func (kp KeyPair) Encode(data []byte) ([]byte, error) {
+func (kp *KeyPair) Encode(data []byte) ([]byte, error) {
 	//check publickey existence
 	if kp.PublicKey == nil {
 		return nil, fmt.Errorf("no public key provided")
@@ -38,7 +43,7 @@ func (kp KeyPair) Encode(data []byte) ([]byte, error) {
 }
 
 //decode data using kp's private key
-func (kp KeyPair) Decode(data []byte) ([]byte, error) {
+func (kp *KeyPair) Decode(data []byte) ([]byte, error) {
 	//check privatekey existence
 	if kp.PrivateKey == nil {
 		return nil, fmt.Errorf("no private key provided")
@@ -49,7 +54,7 @@ func (kp KeyPair) Decode(data []byte) ([]byte, error) {
 	var outputBuffer bytes.Buffer
 
 	//decode
-	err := gpg.Decode(kp.PrivateKey, []byte{}, inputBuffer, &outputBuffer)
+	err := gpg.Decode(kp.PrivateKey, kp.Passphrase, inputBuffer, &outputBuffer)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding data: %s", err)
 	}
@@ -58,11 +63,33 @@ func (kp KeyPair) Decode(data []byte) ([]byte, error) {
 }
 
 //get address to send to
-func (kp KeyPair) GetBase58Address() string {
-	return base58.Encode(kp.PublicKey)
+func (kp *KeyPair) GetBase58Address() string {
+	hasher := md5.New()
+	sum := hasher.Sum(kp.PublicKey)
+	return base58.Encode(sum[:])
 }
 
-//get public key from address
-func KeyPairFromBase58Address(address string) KeyPair {
-	return KeyPair{PublicKey:base58.Decode(address)}
+//string representation
+func (kp * KeyPair) String() string {
+	return "pub:" + string(kp.PublicKey) + "\bpriv:" + string(kp.PrivateKey) + "\npassphrase:" + string(kp.Passphrase)
+}
+
+func KeyPairFromFile(publicKeyFile, privateKeyFile, passphrase string) (*KeyPair, error) {
+	pub, err := ioutil.ReadFile(publicKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("keypair from file cannot open %s: %s", publicKeyFile, err)
+	}
+	priv, err := ioutil.ReadFile(privateKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("keypair from file cannot open %s: %s", privateKeyFile, err)
+	}
+	_, err = openpgp.ReadArmoredKeyRing(bytes.NewBuffer(pub))
+	if err != nil {
+		return nil, fmt.Errorf("public key error: %s", err)
+	}
+	_, err = openpgp.ReadArmoredKeyRing(bytes.NewBuffer(priv))
+	if err != nil {
+		return nil, fmt.Errorf("private key error: %s", err)
+	}
+	return &KeyPair{PrivateKey:priv, PublicKey:pub, Passphrase:[]byte(passphrase)}, nil
 }

@@ -1,15 +1,12 @@
 package message
 
-type Address string
-
 type EncryptedMessage struct {
-	//base58 encode pubkey
-	ReceiverAddress Address
+	//base58 encoded hash of public key
+	ReceiverAddress string
 
 	//encrypted message contents
 	DataLength int
 	Data []byte
 }
-
 
 
