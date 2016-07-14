@@ -151,6 +151,9 @@ func GetAllMessages() (data []network.NetworkMessage, err error) {
 	return
 }
 
+func GetPublicKey() string {
+	return "123456789"
+}
 func AddKeys(data []*message.KeyPair) error {
 	return db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(keys)
