@@ -19,8 +19,13 @@ socket.onclose = function() {
 
 function sendMessage() {
     text = $('#texxt').val();
+    if (text === "") {
+        return
+    }
+
     if ($("#receiver-key").length === 0) {
         receiver = $("#top-name").attr("name");
+        appendMessage(true, "ME: " + PUBLIC_KEY, text);
     } else if (dialogs[$("#receiver-key").val()] !== undefined) {
         receiver = $("#receiver-key").val();
         changeDialog(receiver).call();
@@ -106,10 +111,13 @@ function dictAppend(dict, key, value) {
 }
 
 function viewDialogs() {
+    $(".dialog-list-elem").attr('active', 'no')
+    $(".dialog-list-elem").remove();
     for (var user in dialogs) {
         listElem = $("<li></li>")
             .attr('id', "dialog-" + user)
             .attr('data', user)
+            .attr('active', 'yes')
             .addClass('dialog-list-elem')
             .append($("<div></div>")
                 .addClass("info")
@@ -120,7 +128,9 @@ function viewDialogs() {
             );
         $(".list-friends").append(listElem)
     }
-    $('.dialog-list-elem').live('click', function () {
+    console.log(dialogs);
+    console.log($('.dialog-list-elem'));
+    $("body").on('click', ".dialog-list-elem", function () {
         changeDialog($(this).attr('data')).call();
         $("#dialog-" + $(this).attr('data')).find("div.user").attr("style", "");
     });

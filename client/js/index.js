@@ -24,17 +24,17 @@
   };
 
   insertI = function() {
-    var innerText;
-    innerText = $.trim($("#texxt").val());
-    if (innerText !== "") {
-      $(".messages").append(
-            "<li class=\"i\"><div class=\"head\"><span class=\"time\">" +
-            (new Date().getHours()) + ":" + (new Date().getMinutes()) +
-            ", Today</span><span class=\"name\"> Me</span></div><div class=\"message\">" +
-            innerText + "</div></li>"
-      );
+//    var innerText;
+//    innerText = $.trim($("#texxt").val());
+//    if (innerText !== "") {
+//      $(".messages").append(
+//            "<li class=\"i\"><div class=\"head\"><span class=\"time\">" +
+//            (new Date().getHours()) + ":" + (new Date().getMinutes()) +
+//            ", Today</span><span class=\"name\"> Me</span></div><div class=\"message\">" +
+//            innerText + "</div></li>"
+//      );
       claerResizeScroll();
-    }
+//    }
   };
 
   $(document).ready(function() {

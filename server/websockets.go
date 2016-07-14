@@ -28,7 +28,6 @@ func receive(ws *websocket.Conn) {
 	ws.SetReadDeadline(time.Time{})
 
 	for {
-		fmt.Println("KEK")
 		msg := WebSocketMessage{}
 
 		err := ws.ReadJSON(&msg)
