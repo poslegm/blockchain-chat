@@ -19,7 +19,7 @@ type NetworkMessage struct {
 	// заполняется, если messageType == REQUEST, содержит адрес, к которому пытается подключиться
 	IP string
 
-	data []byte
+	Data []byte
 }
 
 func CreateTextNetworkMessage(receiver, sender, text string, publicKey []byte) (NetworkMessage, error) {
@@ -37,7 +37,7 @@ func CreateTextNetworkMessage(receiver, sender, text string, publicKey []byte) (
 
 	encryptedBytes, err := json.Marshal(encrypted)
 
-	return NetworkMessage{MessageType:MESSAGE, data:encryptedBytes}, err
+	return NetworkMessage{MessageType:MESSAGE, Data:encryptedBytes}, err
 }
 
 func (msg NetworkMessage) AsTextMessage() (message.TextMessage, error) {
@@ -47,7 +47,7 @@ func (msg NetworkMessage) AsTextMessage() (message.TextMessage, error) {
 	}
 
 	encrypted := message.EncryptedMessage{}
-	err := json.Unmarshal(msg.data, &encrypted)
+	err := json.Unmarshal(msg.Data, &encrypted)
 	// TODO тут можно перебрать другие пары из базы
 	if encrypted.ReceiverAddress != CurrentNetworkUser.KeyPair.GetBase58Address() {
 		return message.TextMessage{}, errors.New("unsuitable-pair")

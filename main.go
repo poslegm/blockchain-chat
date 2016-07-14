@@ -14,7 +14,7 @@ import (
 const (
 	pubKey     = "message/samplekey_pub.asc"
 	privKey    = "message/samplekey_priv.asc"
-	passphrase = "message/sample-key"
+	passphrase = "sample-key"
 )
 
 func main() {
