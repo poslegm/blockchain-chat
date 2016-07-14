@@ -9,11 +9,11 @@ import (
 )
 
 func TestDB(t *testing.T) {
-	err := InitDB()
+	err := tInitDB()
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = CloseDB()
+	err = tCloseDB()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,4 +103,44 @@ func TestKeys(t *testing.T) {
 		t.Fatal("key wasn't found")
 	}
 	fmt.Println(outKey)
+}
+
+func TestContacts(t *testing.T) {
+	tInitDB()
+	defer tCloseDB()
+
+	inContacts := []*message.KeyPair{
+		&message.KeyPair{[]byte("pubkey1"), nil, nil},
+		&message.KeyPair{[]byte("pubkey2"), nil, nil},
+	}
+
+	for _, v := range inContacts {
+		fmt.Println(v)
+	}
+
+	err := AddContacts(inContacts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	outContacts, err := GetAllContacts()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, v := range outContacts {
+		fmt.Println(v)
+	}
+
+	addr := inContacts[0].GetBase58Address()
+	fmt.Println(addr)
+
+	outContact, err := GetContactByAddress(addr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if outContact == nil {
+		t.Fatal("contact wasn't found")
+	}
+	fmt.Println(outContact)
 }

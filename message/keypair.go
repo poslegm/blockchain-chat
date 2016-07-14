@@ -70,7 +70,7 @@ func (kp *KeyPair) GetBase58Address() string {
 
 //string representation
 func (kp * KeyPair) String() string {
-	return "pub:" + string(kp.PublicKey) + "\bpriv:" + string(kp.PrivateKey) + "\npassphrase:" + string(kp.Passphrase)
+	return "pub:" + string(kp.PublicKey) + "\npriv:" + string(kp.PrivateKey) + "\npassphrase:" + string(kp.Passphrase)
 }
 
 func KeyPairFromFile(publicKeyFile, privateKeyFile, passphrase string) (*KeyPair, error) {

@@ -216,3 +216,55 @@ func GetKeyByAddress(address string) (kp *message.KeyPair, err error) {
 	})
 	return
 }
+
+func AddContacts(data []*message.KeyPair) error {
+	return db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket(contacts)
+		for _, v := range data {
+			buf, err := json.Marshal(v)
+			if err != nil {
+				return fmt.Errorf("add contacts marshal: %s", err)
+			}
+			key := []byte(v.GetBase58Address())
+			err = b.Put(key, buf)
+			if err != nil {
+				return fmt.Errorf("add contacts db put: %s", err)
+			}
+		}
+		return nil
+	})
+}
+
+func GetAllContacts() (data []*message.KeyPair, err error) {
+	err = db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(contacts)
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			kp := &message.KeyPair{}
+			terr := json.Unmarshal(v, kp)
+			if terr != nil {
+				return fmt.Errorf("get all contacts unmarshal: %s", terr)
+			}
+			data = append(data, kp)
+		}
+		return nil
+	})
+	return
+}
+
+func GetContactByAddress(address string) (kp *message.KeyPair, err error) {
+	err = db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(contacts)
+		buf := b.Get([]byte(address))
+		if buf == nil {
+			return nil
+		}
+		kp = &message.KeyPair{}
+		err := json.Unmarshal(buf, kp)
+		if err != nil {
+			return fmt.Errorf("get contact by addrress unmarshal: %s", err)
+		}
+		return nil
+	})
+	return
+}
