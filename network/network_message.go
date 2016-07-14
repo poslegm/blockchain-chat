@@ -1,0 +1,57 @@
+package network
+
+import (
+	"encoding/json"
+
+	"github.com/poslegm/blockchain-chat/message"
+	"errors"
+	"fmt"
+)
+
+// TODO сообщение, идущее по сети, должно быть сериализованно в массив байтов;
+// TODO сделать интерфейс для преобразования сообщения от клиента в вид для сети;
+// TODO так же по сети могут передаваться блоки, надо держать это в голове;
+
+const MESSAGE = "MESSAGE"
+const REQUEST = "REQUEST"
+type NetworkMessage struct {
+	MessageType string
+	// заполняется, если messageType == REQUEST, содержит адрес, к которому пытается подключиться
+	IP string
+
+	data []byte
+}
+
+func CreateTextNetworkMessage(receiver, sender, text string, publicKey []byte) (NetworkMessage, error) {
+	textMessage := message.TextMessage{
+		Receiver:receiver,
+		Sender:sender,
+		Text:text,
+	}
+
+	encrypted, err := textMessage.Encode(&message.KeyPair{publicKey, []byte{}, []byte{}})
+	if err != nil {
+		fmt.Println("network_message.CreateTextNetworkMessage: ", err.Error())
+		return NetworkMessage{}, err
+	}
+
+	encryptedBytes, err := json.Marshal(encrypted)
+
+	return NetworkMessage{MessageType:MESSAGE, data:encryptedBytes}, err
+}
+
+func (msg NetworkMessage) AsTextMessage() (message.TextMessage, error) {
+	if msg.MessageType != MESSAGE {
+		return message.TextMessage{}, errors.New(
+			"network_message.asTextMessage: not encrypted messages " + msg.MessageType)
+	}
+
+	encrypted := message.EncryptedMessage{}
+	err := json.Unmarshal(msg.data, &encrypted)
+	// TODO тут можно перебрать другие пары из базы
+	if encrypted.ReceiverAddress != CurrentNetworkUser.KeyPair.GetBase58Address() {
+		return message.TextMessage{}, errors.New("unsuitable-pair")
+	}
+	textMessage, err := encrypted.Decode(CurrentNetworkUser.KeyPair)
+	return textMessage, err
+}

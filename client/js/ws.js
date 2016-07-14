@@ -123,7 +123,7 @@ function viewDialogs() {
                 .addClass("info")
                 .append($("<div></div>")
                     .addClass("user")
-                    .text(user)
+                    .text(user.slice(0, 20) + "...")
                 )
             );
         $(".list-friends").append(listElem)
@@ -170,7 +170,7 @@ function appendMessage(my, sender, text) {
 //                .text("10:13, 10.06.2016")
             .append($("<span></span>")
                 .addClass("name")
-                .text(sender)))
+                .text(sender.slice(0, 20) + "...")))
         .append($("<div></div>")
             .addClass("message")
             .text(text)));

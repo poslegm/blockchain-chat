@@ -64,8 +64,7 @@ func (kp *KeyPair) Decode(data []byte) ([]byte, error) {
 
 //get address to send to
 func (kp *KeyPair) GetBase58Address() string {
-	hasher := md5.New()
-	sum := hasher.Sum(kp.PublicKey)
+	sum := md5.Sum(kp.PublicKey)
 	return base58.Encode(sum[:])
 }
 

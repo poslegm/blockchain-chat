@@ -38,7 +38,6 @@ func receive(ws *websocket.Conn) {
 
 		msg.switchTypes()
 	}
-	fmt.Println("Выход из цикла")
 	ws.Close()
 }
 
@@ -48,17 +47,24 @@ func (msg WebSocketMessage) switchTypes() {
 
 	switch msg.Type {
 	case "GetMessages":
-		// TODO выводить только сообщения, которые можно расшифровать
 		networkMessages, err := db.GetAllMessages()
 		if err != nil {
 			fmt.Println("Websockets.switchTypes: ", err.Error())
 			return
 		}
-
+		fmt.Println(networkMessages)
 		chatMessages := make([]ChatMessage, 0)
 		for _, networkMsg := range networkMessages {
+			textMsg, err := networkMsg.AsTextMessage()
+			if err != nil {
+				if err.Error() != "unsuitable-pair" {
+					fmt.Println("Websockets.switchTypes: ", err.Error())
+				}
+				continue
+			}
+
 			chatMessages = append(chatMessages, ChatMessage{
-				networkMsg.Receiver, networkMsg.Sender, networkMsg.Text,
+				textMsg.Receiver, textMsg.Sender, textMsg.Text,
 			})
 		}
 
@@ -69,13 +75,31 @@ func (msg WebSocketMessage) switchTypes() {
 			return
 		}
 		chatMsg := msg.Messages[0]
-		go network.CurrentNetworkUser.SendMessage(network.CreateTextMessage(
+
+		kp, err := db.GetKeyByAddress(chatMsg.Receiver)
+		if err != nil || kp == nil {
+			fmt.Println("WebSockets.swithTypes: can't get kp from db ", err.Error())
+			return
+		}
+		networkMsg, err := network.CreateTextNetworkMessage(
 			chatMsg.Receiver,
 			chatMsg.Sender,
 			chatMsg.Text,
-		))
+			kp.PublicKey,
+		)
+
+		if err != nil {
+			fmt.Println("Websockets.switchTypes: can't send message ", err.Error())
+		} else {
+			go network.CurrentNetworkUser.SendMessage(networkMsg)
+		}
 	case "GetMyKey":
-		WebSocketQueue <- WebSocketMessage{Type:"Key", Key:db.GetPublicKey()}
+		publicKey, err := db.GetPublicKey()
+		if err != nil {
+			fmt.Println("Websockets.switchTypes: can't send public key ", err.Error())
+		} else {
+			WebSocketQueue <- WebSocketMessage{Type:"Key", Key:string(publicKey)}
+		}
 	}
 }
 
@@ -93,13 +117,21 @@ func handleMessagesQueue(ws *websocket.Conn) {
 				fmt.Println("WebSocket.handleMessagesQueue: sended ", msg)
 			}
 		case msg := <- network.CurrentNetworkUser.IncomingMessages:
-			WebSocketQueue <- WebSocketMessage{
-				Type:"NewMessage",
-				Messages:[]ChatMessage{{
-					msg.Receiver,
-					msg.Sender,
-					msg.Text,
-				}},
+			textMsg, err := msg.AsTextMessage()
+			if err != nil {
+				if err.Error() != "unsuitable-pair" {
+					fmt.Println("Websockts.switchTypes: ", err.Error())
+				}
+				continue
+			} else {
+				WebSocketQueue <- WebSocketMessage{
+					Type:"NewMessage",
+					Messages:[]ChatMessage{{
+						textMsg.Receiver,
+						textMsg.Sender,
+						textMsg.Text,
+					}},
+				}
 			}
 		}
 	}

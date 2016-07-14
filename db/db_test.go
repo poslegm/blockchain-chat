@@ -24,9 +24,9 @@ func TestMessages(t *testing.T) {
 	defer tCloseDB()
 
 	inMsgs := []network.NetworkMessage{
-		network.CreateTextMessage("123", "345", "678"),
-		network.CreateTextMessage("asd", "fgh", "jkl"),
-		network.CreateTextMessage("zxc", "vbn", "nmm"),
+		//network.CreateTextNetworkMessage("123", "345", "678"),
+		//network.CreateTextNetworkMessage("asd", "fgh", "jkl"),
+		//network.CreateTextNetworkMessage("zxc", "vbn", "nmm"),
 	}
 
 	err := AddMessages(inMsgs)

@@ -1,15 +1,22 @@
 package main
 
 import (
-	"github.com/poslegm/blockchain-chat/server"
-	"github.com/poslegm/blockchain-chat/db"
-	"github.com/poslegm/blockchain-chat/network"
 	"fmt"
+	"github.com/poslegm/blockchain-chat/db"
+	"github.com/poslegm/blockchain-chat/message"
+	"github.com/poslegm/blockchain-chat/network"
+	"github.com/poslegm/blockchain-chat/server"
 	"time"
 )
-// TODO запись публичных ключей в базе
-// TODO хранить свои ключи
-// TODO хранить время отправки сообщения
+
+// TODO пока по умолчанию берётся просто первая пара ключей из массива
+
+const (
+	pubKey     = "message/samplekey_pub.asc"
+	privKey    = "message/samplekey_priv.asc"
+	passphrase = "message/sample-key"
+)
+
 func main() {
 	err := db.InitDB()
 	if err != nil {
@@ -17,7 +24,27 @@ func main() {
 		return
 	}
 
-	err = network.Run()
+	kp, err := message.KeyPairFromFile(pubKey, privKey, passphrase)
+	if err != nil {
+		fmt.Printf("main.Run: cannot create keypair from file: %s\n", err)
+		return
+	}
+	err = db.AddKeys([]*message.KeyPair{kp})
+	if err != nil {
+		fmt.Println("main.Run: cannot add keypair to db:", err)
+		return
+	}
+
+	keyPairs, err := db.GetAllKeys()
+	if err != nil {
+		fmt.Println("main.Run: can't get keys from db ", err.Error())
+		return
+	} else if len(keyPairs) == 0 {
+		fmt.Println("main.Run: there is no key pairs in db")
+		return
+	}
+
+	err = network.Run(keyPairs[0])
 	if err != nil {
 		fmt.Println("main.Run: can't run network ", err.Error())
 		return
@@ -43,15 +70,17 @@ func createConnectQueue() {
 func handleNetworkChans() {
 	for {
 		select {
-		case msg := <- network.CurrentNetworkUser.IncomingMessages:
+		case msg := <-network.CurrentNetworkUser.IncomingMessages:
+			fmt.Println(msg)
 			db.AddMessages([]network.NetworkMessage{msg})
-		case address := <- network.CurrentNetworkUser.NewNodes:
+		case address := <-network.CurrentNetworkUser.NewNodes:
 			db.AddKnownAddresses([]network.NetAddress{{
 				time.Now(),
 				address,
 				network.TCPPort,
 			}})
-		case msg := <- network.CurrentNetworkUser.OutgoingMessages:
+		case msg := <-network.CurrentNetworkUser.OutgoingMessages:
+			fmt.Println(msg)
 			db.AddMessages([]network.NetworkMessage{msg})
 		}
 	}

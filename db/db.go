@@ -8,6 +8,7 @@ import (
 	"encoding/binary"
 	"github.com/poslegm/blockchain-chat/message"
 	"os"
+	"errors"
 )
 
 var db *bolt.DB;
@@ -151,9 +152,19 @@ func GetAllMessages() (data []network.NetworkMessage, err error) {
 	return
 }
 
-func GetPublicKey() string {
-	return "123456789"
+func GetPublicKey() (string, error) {
+	keyPairs, err := GetAllKeys()
+	if err != nil {
+		fmt.Println("db.GetPublicKey: can't get keys from db ", err.Error())
+		return "", err
+	} else if len(keyPairs) == 0 {
+		fmt.Println("db.GetPublicKey: there is no key pairs in db")
+		return "", errors.New("There is no key pairs in db")
+	}
+
+	return keyPairs[0].GetBase58Address(), nil
 }
+
 func AddKeys(data []*message.KeyPair) error {
 	return db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(keys)
