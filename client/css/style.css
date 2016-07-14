@@ -259,6 +259,16 @@ body {
   border-radius: 3px;
   resize: none;
 }
+#receiver-key {
+    height: 60px;
+    margin: 10px 5%;
+    width: 90%;
+    outline: none;
+    padding: 15px;
+    border: none;
+    border-radius: 3px;
+    resize: none;
+}
 .ui .write-form textarea:before {
   content: '';
   clear: both;
@@ -288,4 +298,7 @@ body {
 }
 .ui i.fa-picture-o {
   margin-left: 5%;
+}
+#top-name {
+    display: inline-block;
 }

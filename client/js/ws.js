@@ -18,11 +18,24 @@ socket.onclose = function() {
 }
 
 function sendMessage() {
-    text = $('#texxt').val()
+    text = $('#texxt').val();
+    if ($("#receiver-key").length === 0) {
+        receiver = $("#top-name").attr("name");
+    } else if (dialogs[$("#receiver-key").val()] !== undefined) {
+        receiver = $("#receiver-key").val();
+        changeDialog(receiver).call();
+    } else if ($("#receiver-key").val() !== "") {
+        receiver = $("#receiver-key").val();
+        addNewDialog(receiver, text);
+        changeDialog(receiver).call();
+        viewDialogs();
+    } else {
+        return
+    }
     msg = {
         Type: "SendMessage",
         Messages: [{
-            Receiver: "123fdsk124pn12",
+            Receiver: receiver,
             Sender: PUBLIC_KEY,
             Text: text
         }]
@@ -72,6 +85,18 @@ function handlePublicKey(key) {
     console.log(PUBLIC_KEY);
 }
 
+$(document).ready(function() {
+    $("#new-user").click(function () {
+        $(".messages").empty();
+        $("#top-name").text("Новый получатель");
+        if ($("#receiver-key").length === 0) {
+            $(".top")
+                .append($('<textarea placeholder="Публичный ключ получателя" name="e" id="receiver-key" rows="1"></textarea>'));
+        }
+    });
+});
+
+
 function dictAppend(dict, key, value) {
     if (dict[key] !== undefined) {
         dict[key].push(value)
@@ -82,13 +107,10 @@ function dictAppend(dict, key, value) {
 
 function viewDialogs() {
     for (var user in dialogs) {
-        console.log(user);
         listElem = $("<li></li>")
             .attr('id', "dialog-" + user)
-            .click(function() {
-                changeDialog(dialogs, user);
-                $("#dialog-" + user).find("div.user").attr("style", "");
-            })
+            .attr('data', user)
+            .addClass('dialog-list-elem')
             .append($("<div></div>")
                 .addClass("info")
                 .append($("<div></div>")
@@ -98,12 +120,18 @@ function viewDialogs() {
             );
         $(".list-friends").append(listElem)
     }
+    $('.dialog-list-elem').live('click', function () {
+        changeDialog($(this).attr('data')).call();
+        $("#dialog-" + $(this).attr('data')).find("div.user").attr("style", "");
+    });
 }
 
-function changeDialog(dialogs, userKey) {
+function changeDialog(userKey) {
     return function () {
         $("#top-name").text(userKey);
+        $("#top-name").attr("name", userKey);
         $(".messages").empty();
+        $("#receiver-key").remove();
         for (var i in dialogs[userKey]) {
             msg = dialogs[userKey][i];
             if (msg["Sender"] === PUBLIC_KEY) {
@@ -117,9 +145,9 @@ function changeDialog(dialogs, userKey) {
 }
 
 function appendMessage(my, sender, text) {
-    var messageClass = "i";
+    var messageClass = "friend-with-a-SVAGina";
     if (my) {
-        messageClass = "friend-with-a-SVAGina";
+        messageClass = "i";
     }
 
     $(".messages").append($("<li></li>")
@@ -156,4 +184,8 @@ function addNewMessage(my, user, message) {
     } else {
         $("#dialog-" + user).find("div.user").attr("style", "font-weight:bold");
     }
+}
+
+function addNewDialog(user, text) {
+    dictAppend(dialogs, user, {"Sender": PUBLIC_KEY, "Receiver": user, "Text": text});
 }

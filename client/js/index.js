@@ -24,27 +24,16 @@
   };
 
   insertI = function() {
-    var innerText, otvet;
+    var innerText;
     innerText = $.trim($("#texxt").val());
     if (innerText !== "") {
       $(".messages").append(
             "<li class=\"i\"><div class=\"head\"><span class=\"time\">" +
             (new Date().getHours()) + ":" + (new Date().getMinutes()) +
-            ", Today</span><span class=\"name\"> Букер</span></div><div class=\"message\">" +
+            ", Today</span><span class=\"name\"> Me</span></div><div class=\"message\">" +
             innerText + "</div></li>"
       );
       claerResizeScroll();
-
-      return otvet = setInterval(function() {
-        $(".messages").append(
-            "<li class=\"friend-with-a-SVAGina\"><div class=\"head\"><span class=\"name\">VS94SKI  </span><span class=\"time\">" +
-            (new Date().getHours()) + ":" + (new Date().getMinutes()) +
-            ", Today</span></div><div class=\"message\">" +
-            "ЧПЕК" + "</div></li>"
-        );
-        claerResizeScroll();
-        return clearInterval(otvet);
-      }, getRandomInt(2500, 500));
     }
   };
 
@@ -60,7 +49,8 @@
     });
     return $(".send").click(function() {
       sendMessage();
-      return insertI();
+      insertI();
+      return false;
     });
   });
 

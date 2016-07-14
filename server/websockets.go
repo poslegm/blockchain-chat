@@ -93,6 +93,15 @@ func handleMessagesQueue(ws *websocket.Conn) {
 			} else {
 				fmt.Println("WebSocket.handleMessagesQueue: sended ", msg)
 			}
+		case msg := <- network.CurrentNetworkUser.IncomingMessages:
+			WebSocketQueue <- WebSocketMessage{
+				Type:"NewMessage",
+				Messages:[]ChatMessage{{
+					msg.Receiver,
+					msg.Sender,
+					msg.Text,
+				}},
+			}
 		}
 	}
 }

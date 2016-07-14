@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <title>Blockchain messenger</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
  	<script src="js/ws.js"></script>
     <link rel="stylesheet" href="css/normalize.css">
 	<link rel="stylesheet" href="css/style.css">
@@ -17,8 +17,8 @@
 					<!--<input type="submit" value="&#xf002;">-->
 				<!--</form>-->
 				<menu class="list-friends">
-                    <li>
-                        <div class="info" id="new-user">
+                    <li id="new-user">
+                        <div class="info" >
                             <div class="user">Новый адресат</div>
                             <div class="status on">Отправка по публичному ключу</div>
                         </div>
@@ -32,12 +32,13 @@
 				</menu>
 		</div>
 		<div class="chat">
-			<div class="top">
+			<div class="top" >
 				<div class="avatar">
 				</div>
 				<div class="info">
-					<div class="name" id="top-name">Нет сообщений</div>
+					<div class="name" id="top-name">Новый адресат</div>
 				</div>
+				<textarea placeholder="Публичный ключ получателя" name="e" id="receiver-key" rows="1"></textarea>
 			</div>
 			<ul class="messages">
 
