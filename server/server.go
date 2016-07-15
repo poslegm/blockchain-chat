@@ -12,7 +12,9 @@ func Run(rootDir string, port string) {
 	router := mux.NewRouter()
 
 	router.Methods("GET").Path("/websocket").HandlerFunc(createWSHandler())
-	router.Methods("GET").Path("/").HandlerFunc(createIndexHandler(rootDir))
+	router.Methods("GET").Path("/websocket-addition").HandlerFunc(createAdditionWSHandler())
+	router.Methods("GET").Path("/").HandlerFunc(createPageHandler(rootDir))
+	router.Methods("GET").Path("/{file}").HandlerFunc(createPageHandler(rootDir))
 	router.Methods("GET").Path("/{dir}/{path}").HandlerFunc(createPathHandler(rootDir))
 
 	http.Handle("/", router)

@@ -20,7 +20,7 @@ func TestFileServer(t *testing.T) {
 }
 
 func testHomePage(t *testing.T, testDir string) {
-	homeHandle := createIndexHandler(testDir)
+	homeHandle := createPageHandler(testDir)
 	req, _ := http.NewRequest("GET", "", nil)
 	w := httptest.NewRecorder()
 	homeHandle.ServeHTTP(w, req)

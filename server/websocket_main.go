@@ -12,7 +12,7 @@ import (
 
 var WebSocketQueue = make(chan WebSocketMessage)
 
-func receive(ws *websocket.Conn) {
+func receive(ws *websocket.Conn, handle func (m WebSocketMessage)) {
 	// чтение не должно прекращаться
 	ws.SetReadDeadline(time.Time{})
 
@@ -25,13 +25,13 @@ func receive(ws *websocket.Conn) {
 			break
 		}
 
-		msg.switchTypes()
+		handle(msg)
 	}
 	ws.Close()
 }
 
 // выбирает ответ на сообщение в зависимости от типа и кладёт его в очередь сообщений
-func (msg WebSocketMessage) switchTypes() {
+func switchTypes(msg WebSocketMessage) {
 	fmt.Println("Websockets.swithTypes: ", msg)
 
 	switch msg.Type {
@@ -84,7 +84,6 @@ func (msg WebSocketMessage) switchTypes() {
 			return
 		}
 
-
 		networkMsg, err := network.CreateTextNetworkMessage(
 			kp.GetBase58Address(),
 			chatMsg.Sender,
@@ -102,7 +101,7 @@ func (msg WebSocketMessage) switchTypes() {
 			WebSocketQueue <- WebSocketMessage{
 				Type: "NewKeyHash",
 				Key: kp.GetBase58Address(),
-				Messages: []ChatMessage{ chatMsg },
+				Messages: []ChatMessage{chatMsg },
 			}
 		}
 	case "GetMyKey":
@@ -118,7 +117,7 @@ func (msg WebSocketMessage) switchTypes() {
 func handleMessagesQueue(ws *websocket.Conn) {
 	for {
 		select {
-		case msg := <- WebSocketQueue:
+		case msg := <-WebSocketQueue:
 			ws.SetWriteDeadline(time.Now().Add(30 * time.Second))
 			err := ws.WriteJSON(&msg)
 			if err != nil {
@@ -128,7 +127,7 @@ func handleMessagesQueue(ws *websocket.Conn) {
 			} else {
 				fmt.Println("WebSocket.handleMessagesQueue: sended ", msg)
 			}
-		case msg := <- network.CurrentNetworkUser.IncomingMessages:
+		case msg := <-network.CurrentNetworkUser.IncomingMessages:
 			textMsg, err := msg.AsTextMessage()
 			if err != nil {
 				if err.Error() != "unsuitable-pair" {
@@ -150,19 +149,19 @@ func handleMessagesQueue(ws *websocket.Conn) {
 	}
 }
 
-func createConnection(ws *websocket.Conn) {
-	go receive(ws)
+func createConnection(ws *websocket.Conn, handle func (m WebSocketMessage)) {
+	go receive(ws, handle)
 	go handleMessagesQueue(ws)
 }
 
 func createWSHandler() http.HandlerFunc {
-	return func (w http.ResponseWriter, r * http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ws, err := websocket.Upgrade(w, r, nil, 1024, 1024)
 		if err != nil {
 			http.Error(w, "Bad request", 400)
 			return
 		}
 
-		createConnection(ws)
+		createConnection(ws, switchTypes)
 	}
 }

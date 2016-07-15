@@ -14,12 +14,13 @@ import (
 
 const MESSAGE = "MESSAGE"
 const REQUEST = "REQUEST"
+
 type NetworkMessage struct {
 	MessageType string
 	// заполняется, если messageType == REQUEST, содержит адрес, к которому пытается подключиться
-	IP string
+	IP          string
 
-	Data []byte
+	Data        []byte
 }
 
 func CreateTextNetworkMessage(receiver, sender, text string, publicKey []byte) (NetworkMessage, error) {

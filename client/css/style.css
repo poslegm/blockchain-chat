@@ -302,3 +302,9 @@ body {
 #top-name {
     display: inline-block;
 }
+#write-form-addition textarea {
+    height: 350px;
+}
+#ui-addition .chat {
+    width: 100%;
+}

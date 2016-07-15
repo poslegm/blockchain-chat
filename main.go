@@ -17,8 +17,8 @@ import (
 // TODO хранить отправленные сообщения в расшифрованном виде
 
 const (
-	pubKey     = "message/samplekey_pub.asc"
-	privKey    = "message/samplekey_priv.asc"
+	pubKey = "message/samplekey_pub.asc"
+	privKey = "message/samplekey_priv.asc"
 	passphrase = "sample-key"
 )
 

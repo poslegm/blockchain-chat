@@ -27,13 +27,13 @@ func (n Node) send(msg NetworkMessage) (int, error) {
 }
 
 type NetworkUser struct {
-	Nodes 		   map[string]*Node // контакты
-	Address 	   string
-	ConnectQueue	   chan string // очередь на отправку запросов соединения
-	IncomingMessages   chan NetworkMessage // входящие для добавления в базу
-	OutgoingMessages   chan NetworkMessage
-	NewNodes           chan string // адреса новых соединений для добавления в базу
-	KeyPair		   *message.KeyPair
+	Nodes            map[string]*Node    // контакты
+	Address          string
+	ConnectQueue     chan string         // очередь на отправку запросов соединения
+	IncomingMessages chan NetworkMessage // входящие для добавления в базу
+	OutgoingMessages chan NetworkMessage
+	NewNodes         chan string         // адреса новых соединений для добавления в базу
+	KeyPair          *message.KeyPair
 }
 
 var CurrentNetworkUser *NetworkUser = new(NetworkUser)
@@ -145,7 +145,7 @@ func (networkUser *NetworkUser) listenTCPRequests() {
 // отправка запросов на соединение с узлами из очереди подключений
 func (networkUser *NetworkUser) sendConnectionRequests() {
 	for {
-		address := <- networkUser.ConnectQueue
+		address := <-networkUser.ConnectQueue
 		address = address + ":" + TCPPort
 
 		if address != networkUser.Address && networkUser.Nodes[address] == nil {
@@ -206,7 +206,7 @@ func currentAddress() (string, error) {
 		for i, addr := range address {
 			binAddr := net.ParseIP(addr).To4()
 
-			if(binAddr != nil && len(binAddr) == 4) {
+			if (binAddr != nil && len(binAddr) == 4) {
 				addrId = i
 				break
 			}

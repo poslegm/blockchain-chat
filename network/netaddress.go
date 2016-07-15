@@ -9,10 +9,10 @@ type NetAddress struct {
 	Lastseen time.Time;
 
 	//peer's ip address
-	Ip string
+	Ip       string
 
 	//peer's port
-	Port string
+	Port     string
 }
 
 func CreateNetAddress(lastseen time.Time, ip, port string) NetAddress {

@@ -50,7 +50,7 @@ func (kp *KeyPair) Decode(data []byte) ([]byte, error) {
 	}
 
 	//create buffers
- 	inputBuffer := bytes.NewBuffer(data)
+	inputBuffer := bytes.NewBuffer(data)
 	var outputBuffer bytes.Buffer
 
 	//decode
@@ -69,7 +69,7 @@ func (kp *KeyPair) GetBase58Address() string {
 }
 
 //string representation
-func (kp * KeyPair) String() string {
+func (kp *KeyPair) String() string {
 	return "pub:" + string(kp.PublicKey) + "\npriv:" + string(kp.PrivateKey) + "\npassphrase:" + string(kp.Passphrase)
 }
 

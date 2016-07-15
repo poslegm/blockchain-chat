@@ -11,12 +11,34 @@ import (
 )
 
 func createIndexHandler(rootDir string) http.HandlerFunc {
-	return func (resp http.ResponseWriter, req * http.Request) {
+	return func(resp http.ResponseWriter, req *http.Request) {
 		resp.Header().Add("Content-Type", "text/html")
 
 		content, err := ioutil.ReadFile(path.Join(rootDir, "index.html"))
-		if err != nil {
+		if err != nil || content == nil {
 			fmt.Println(err.Error())
+			resp.WriteHeader(404)
+			resp.Write([]byte{})
+			return
+		}
+
+		resp.Write(content)
+	}
+}
+
+func createPageHandler(rootDir string) http.HandlerFunc {
+	return func(resp http.ResponseWriter, req *http.Request) {
+		file := mux.Vars(req)["file"]
+		if file == "" {
+			file = "index.html"
+		}
+		resp.Header().Add("Content-Type", "text/html")
+
+		content, err := ioutil.ReadFile(path.Join(rootDir, file))
+		if err != nil || content == nil {
+			fmt.Println(err.Error())
+			resp.WriteHeader(404)
+			resp.Write([]byte{})
 			return
 		}
 
