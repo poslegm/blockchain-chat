@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"golang.org/x/crypto/openpgp"
 	"crypto/md5"
+	"golang.org/x/crypto/openpgp/armor"
+	"os"
 )
 
 //gpg key pair
@@ -84,11 +86,98 @@ func KeyPairFromFile(publicKeyFile, privateKeyFile, passphrase string) (*KeyPair
 	}
 	_, err = openpgp.ReadArmoredKeyRing(bytes.NewBuffer(pub))
 	if err != nil {
-		return nil, fmt.Errorf("public key error: %s", err)
+		return nil, fmt.Errorf("public key read error: %s", err)
 	}
 	_, err = openpgp.ReadArmoredKeyRing(bytes.NewBuffer(priv))
 	if err != nil {
-		return nil, fmt.Errorf("private key error: %s", err)
+		return nil, fmt.Errorf("private key read error: %s", err)
+	}
+	//TODO fix this crutch
+	_, err = os.Stat(passphrase)
+	if err == nil {
+		pass, err := ioutil.ReadFile(passphrase)
+		if err != nil {
+			return nil, fmt.Errorf("passphrase read error: %s", err)
+		}
+		passphrase = string(pass)
 	}
 	return &KeyPair{PrivateKey:priv, PublicKey:pub, Passphrase:[]byte(passphrase)}, nil
+}
+
+func (kp *KeyPair) SaveToFile(name string) error {
+	pubFileName := name + ".pub"
+	privFileName := name + ".priv"
+	passFileName := name + ".pass"
+
+	err := ioutil.WriteFile(pubFileName, kp.PublicKey, 0660)
+	if err != nil {
+		return fmt.Errorf("public key write error: %s", err)
+	}
+
+	err = ioutil.WriteFile(privFileName, kp.PrivateKey, 0660)
+	if err != nil {
+		return fmt.Errorf("private key write error: %s", err)
+	}
+
+	err = ioutil.WriteFile(passFileName, kp.Passphrase, 0660)
+	if err != nil {
+		return fmt.Errorf("passphrase write error: %s", err)
+	}
+	return nil
+}
+
+func GenerateKeyPair(name, comment, email, passphrase string) (*KeyPair, error) {
+	//unused, because openpgp doesn't create encrypted keys
+	_ = passphrase
+	//create new entity
+	entity, err := openpgp.NewEntity(name, comment, email, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate keypair with %s %s %s: %s", name, comment, email, err)
+	}
+
+	//sign ourselves
+	for _, id := range entity.Identities {
+		err := id.SelfSignature.SignUserId(id.UserId.Id, entity.PrimaryKey, entity.PrivateKey, nil)
+		if err != nil {
+			return nil, fmt.Errorf("cannot sign key pair %s", err)
+		}
+	}
+
+	kp := &KeyPair{}
+	kp.Passphrase = []byte("")
+
+	//serialize private key
+	buf := &bytes.Buffer{}
+	encoder, err := armor.Encode(buf, openpgp.PrivateKeyType, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create private armor encoder: %s", err)
+	}
+	err = entity.SerializePrivate(encoder, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot serialize private key: %s", err)
+	}
+	encoder.Close()
+	kp.PrivateKey, err = ioutil.ReadAll(buf)
+	if err != nil {
+		return nil, fmt.Errorf("cannot write private key: %s", err)
+	}
+
+	//serialize public key
+	buf = &bytes.Buffer{}
+	encoder, err = armor.Encode(buf, openpgp.PublicKeyType, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot creare public armor encoder: %s", err)
+	}
+	err = entity.Serialize(encoder)
+	if err != nil {
+		return nil, fmt.Errorf("cannot serialize public key: %s", err)
+	}
+	encoder.Close()
+	kp.PublicKey, err = ioutil.ReadAll(buf)
+	if err != nil {
+		return nil, fmt.Errorf("cannot write public key: %s", err)
+	}
+
+	fmt.Println(kp)
+	return kp, nil
 }

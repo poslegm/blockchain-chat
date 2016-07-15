@@ -4,6 +4,7 @@ import (
 	"testing"
 	"fmt"
 	"io/ioutil"
+	"os"
 )
 
 const (
@@ -16,17 +17,38 @@ const (
 func TestKeyPair(t *testing.T) {
 	kp, err := KeyPairFromFile(pubKey, privKey, passphrase)
 	if err != nil {
-		t.Fatal("cannot create keypair from file: %s", err)
+		t.Fatalf("cannot create keypair from file: %s", err)
 	}
 	encoded, err := kp.Encode([]byte(message))
 	ioutil.WriteFile("byte.msg", encoded, 0660)
 	if err != nil {
-		t.Fatal("kp encode error: %s", err)
+		t.Fatalf("kp encode error: %s", err)
 	}
 	//fmt.Println(string(encoded))
 	decoded, err := kp.Decode(encoded)
 	if err != nil {
-		t.Fatal("kp decode error: %s", err)
+		t.Fatalf("kp decode error: %s", err)
 	}
 	fmt.Println(string(decoded))
+}
+
+func TestGenerateKeyPair(t *testing.T) {
+	kp, err := GenerateKeyPair("asd@mail", "lol", "kek", "")
+	if err != nil {
+		t.Fatalf("generate key pair: %s", err)
+	}
+
+	err = kp.SaveToFile("new-key")
+	if err != nil {
+		t.Fatal("save to file: %s", err)
+	}
+
+	nkp, err := KeyPairFromFile("new-key.pub", "new-key.priv", "new-key.pass")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(nkp)
+	os.Remove("new-key.pub")
+	os.Remove("new-key.priv")
+	os.Remove("new-key.pass")
 }
