@@ -308,3 +308,28 @@ body {
 #ui-addition .chat {
     width: 100%;
 }
+#write-form-keys-addition textarea {
+    height: 180px;
+}
+#ui-keys-addition {
+    height: 655px;
+}
+#ui-keys-addition .chat {
+    width: 100%;
+}
+#top-keys-addition {
+    height: 40px;
+}
+.add-keys-button {
+    color: #7ac5ef;
+    text-transform: uppercase;
+    font-weight: 600;
+    float: right;
+    margin-right: 5%;
+    margin-left: 20px;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}

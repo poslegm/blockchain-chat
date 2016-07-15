@@ -6,9 +6,14 @@ import (
 )
 
 type WebSocketMessage struct {
-	Type     string
-	Messages []ChatMessage
-	Key      string
+	Type       string
+	Messages   []ChatMessage
+	Key        string
+
+	// для добавление новой пары ключей
+	PublicKey  string
+	PrivateKey string
+	Passphrase string
 }
 
 type ChatMessage struct {
