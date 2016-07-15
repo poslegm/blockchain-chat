@@ -33,19 +33,19 @@ type NetworkUser struct {
 	IncomingMessages chan NetworkMessage // входящие для добавления в базу
 	OutgoingMessages chan NetworkMessage
 	NewNodes         chan string         // адреса новых соединений для добавления в базу
-	KeyPair          *message.KeyPair
+	KeyPairs         []*message.KeyPair
 }
 
 var CurrentNetworkUser *NetworkUser = new(NetworkUser)
 // создаёт объект для обработчика сети
-func setupNetwork(address string, kp *message.KeyPair) *NetworkUser {
+func setupNetwork(address string, kps []*message.KeyPair) *NetworkUser {
 	networkUser := new(NetworkUser)
 	networkUser.Nodes = map[string]*Node{}
 	networkUser.Address = address
 	networkUser.ConnectQueue = make(chan string)
 	networkUser.IncomingMessages = make(chan NetworkMessage)
 	networkUser.OutgoingMessages = make(chan NetworkMessage)
-	networkUser.KeyPair = kp
+	networkUser.KeyPairs = kps
 	return networkUser
 }
 
@@ -216,7 +216,7 @@ func currentAddress() (string, error) {
 	return address[addrId] + ":" + TCPPort, nil
 }
 
-func Run(kp *message.KeyPair) error {
+func Run(kps []*message.KeyPair) error {
 	address, err := currentAddress()
 	if err != nil {
 		fmt.Println("Network.Run: ", err.Error())
@@ -224,7 +224,7 @@ func Run(kp *message.KeyPair) error {
 		return err
 	}
 
-	CurrentNetworkUser = setupNetwork(address, kp)
+	CurrentNetworkUser = setupNetwork(address, kps)
 	go CurrentNetworkUser.sendConnectionRequests()
 	go CurrentNetworkUser.listenTCPRequests()
 

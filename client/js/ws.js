@@ -67,6 +67,7 @@ socket.onmessage = function(event) {
         addNewMessagesToViews(message['Messages']);
     } else if (message['Type'] === 'NewKeyHash') {
         addNewDialog(message['Key'], message['Messages']);
+        viewDialogs();
         changeDialog(message['Key']).call();
     }
 };

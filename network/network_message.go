@@ -49,10 +49,14 @@ func (msg NetworkMessage) AsTextMessage() (message.TextMessage, error) {
 
 	encrypted := message.EncryptedMessage{}
 	err := json.Unmarshal(msg.Data, &encrypted)
-	// TODO тут можно перебрать другие пары из базы
-	if encrypted.ReceiverAddress != CurrentNetworkUser.KeyPair.GetBase58Address() {
-		return message.TextMessage{}, errors.New("unsuitable-pair")
+	if err != nil {
+		return message.TextMessage{}, err
 	}
-	textMessage, err := encrypted.Decode(CurrentNetworkUser.KeyPair)
-	return textMessage, err
+
+	for _, kp := range CurrentNetworkUser.KeyPairs {
+		if encrypted.ReceiverAddress == kp.GetBase58Address() {
+			return encrypted.Decode(kp)
+		}
+	}
+	return message.TextMessage{}, errors.New("unsuitable-pair")
 }

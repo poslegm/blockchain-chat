@@ -9,9 +9,9 @@ import (
 	"time"
 )
 
-// TODO пока по умолчанию берётся просто первая пара ключей из массива
-// TODO получать из базы свой ключ
+// TODO получать из базы массив своих ключей
 // TODO сделать интерфейс для записи своей пары ключей
+// TODO выводить на главной контакты
 // TODO сделать нормальное получение ip
 // TODO хранить отправленные сообщения в расшифрованном виде
 
@@ -49,7 +49,7 @@ func main() {
 		return
 	}
 
-	err = network.Run(keyPairs[0])
+	err = network.Run(keyPairs)
 	if err != nil {
 		fmt.Println("main.Run: can't run network ", err.Error())
 		return
