@@ -23,17 +23,13 @@ function sendMessage() {
         return
     }
 
+    var newPublicKey = false
     if ($("#receiver-key").length === 0) {
         receiver = $("#top-name").attr("name");
         appendMessage(true, "ME: " + PUBLIC_KEY, text);
-    } else if (dialogs[$("#receiver-key").val()] !== undefined) {
-        receiver = $("#receiver-key").val();
-        changeDialog(receiver).call();
     } else if ($("#receiver-key").val() !== "") {
         receiver = $("#receiver-key").val();
-        addNewDialog(receiver, text);
-        changeDialog(receiver).call();
-        viewDialogs();
+        newPublicKey = true
     } else {
         return
     }
@@ -42,7 +38,8 @@ function sendMessage() {
         Messages: [{
             Receiver: receiver,
             Sender: PUBLIC_KEY,
-            Text: text
+            Text: text,
+            NewPublicKey: newPublicKey
         }]
     }
     socket.send(JSON.stringify(msg))
@@ -51,7 +48,7 @@ function sendMessage() {
 socket.onmessage = function(event) {
     var message = JSON.parse(event.data);
 
-    if (message['Type'] == 'AllMessages') {
+    if (message['Type'] === 'AllMessages') {
         console.log("ALL MESSAGES");
         if (PUBLIC_KEY != "") {
             handleMessages(message['Messages']);
@@ -59,15 +56,18 @@ socket.onmessage = function(event) {
             console.log("PUSHED");
             lazyMessages = lazyMessages.concat(message['Messages']);
         }
-    } else if (message['Type'] == 'Key') {
+    } else if (message['Type'] === 'Key') {
         console.log("KEY");
         handlePublicKey(message['Key']);
         handleMessages(lazyMessages);
         lazyMessages = [];
-    } else if (message['Type'] == 'NewMessage') {
+    } else if (message['Type'] === 'NewMessage') {
         console.log("NEW MESSAGE: " + message['']);
         handleMessages(message['Messages']);
         addNewMessagesToViews(message['Messages']);
+    } else if (message['Type'] === 'NewKeyHash') {
+        addNewDialog(message['Key'], message['Messages']);
+        changeDialog(message['Key']).call();
     }
 };
 
@@ -196,6 +196,8 @@ function addNewMessage(my, user, message) {
     }
 }
 
-function addNewDialog(user, text) {
-    dictAppend(dialogs, user, {"Sender": PUBLIC_KEY, "Receiver": user, "Text": text});
+function addNewDialog(user, messages) {
+    for (var i in messages) {
+        dictAppend(dialogs, user, messages[i]);
+    }
 }

@@ -7,21 +7,10 @@ import (
 	"time"
 	"github.com/poslegm/blockchain-chat/network"
 	"github.com/poslegm/blockchain-chat/db"
+	"github.com/poslegm/blockchain-chat/message"
 )
 
 var WebSocketQueue = make(chan WebSocketMessage)
-
-type WebSocketMessage struct {
-	Type     string
-	Messages []ChatMessage
-	Key string
-}
-
-type ChatMessage struct {
-	Receiver string
-	Sender string
-	Text string
-}
 
 func receive(ws *websocket.Conn) {
 	// чтение не должно прекращаться
@@ -64,7 +53,7 @@ func (msg WebSocketMessage) switchTypes() {
 			}
 
 			chatMessages = append(chatMessages, ChatMessage{
-				textMsg.Receiver, textMsg.Sender, textMsg.Text,
+				textMsg.Receiver, textMsg.Sender, textMsg.Text, false,
 			})
 		}
 
@@ -76,13 +65,28 @@ func (msg WebSocketMessage) switchTypes() {
 		}
 		chatMsg := msg.Messages[0]
 
+		if chatMsg.NewPublicKey {
+			err := chatMsg.addNewPublicKeyToDb()
+			if err != nil {
+				fmt.Println("Websocket.swithTypes: can't add new public key ", err.Error())
+			}
+		}
+
 		kp, err := db.GetKeyByAddress(chatMsg.Receiver)
-		if err != nil || kp == nil {
+		if chatMsg.NewPublicKey {
+			kp = &message.KeyPair{[]byte(chatMsg.Receiver), []byte{}, []byte{}}
+		}
+		if err != nil {
 			fmt.Println("WebSockets.swithTypes: can't get kp from db ", err.Error())
 			return
+		} else if kp == nil {
+			fmt.Println("WebSockets.swithTypes: there is no kp in db")
+			return
 		}
+
+
 		networkMsg, err := network.CreateTextNetworkMessage(
-			chatMsg.Receiver,
+			kp.GetBase58Address(),
 			chatMsg.Sender,
 			chatMsg.Text,
 			kp.PublicKey,
@@ -92,6 +96,14 @@ func (msg WebSocketMessage) switchTypes() {
 			fmt.Println("Websockets.switchTypes: can't send message ", err.Error())
 		} else {
 			go network.CurrentNetworkUser.SendMessage(networkMsg)
+		}
+
+		if chatMsg.NewPublicKey {
+			WebSocketQueue <- WebSocketMessage{
+				Type: "NewKeyHash",
+				Key: kp.GetBase58Address(),
+				Messages: []ChatMessage{ chatMsg },
+			}
 		}
 	case "GetMyKey":
 		publicKey, err := db.GetPublicKey()
@@ -127,9 +139,10 @@ func handleMessagesQueue(ws *websocket.Conn) {
 				WebSocketQueue <- WebSocketMessage{
 					Type:"NewMessage",
 					Messages:[]ChatMessage{{
-						textMsg.Receiver,
-						textMsg.Sender,
-						textMsg.Text,
+						Receiver: textMsg.Receiver,
+						Sender: textMsg.Sender,
+						Text: textMsg.Text,
+						NewPublicKey: false,
 					}},
 				}
 			}
