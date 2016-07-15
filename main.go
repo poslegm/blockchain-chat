@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/poslegm/blockchain-chat/db"
-	"github.com/poslegm/blockchain-chat/message"
 	"github.com/poslegm/blockchain-chat/network"
 	"github.com/poslegm/blockchain-chat/server"
 	"time"
@@ -13,28 +12,10 @@ import (
 // TODO сделать нормальное получение ip
 // TODO хранить отправленные сообщения в расшифрованном виде
 
-const (
-	pubKey = "message/samplekey_pub.asc"
-	privKey = "message/samplekey_priv.asc"
-	passphrase = "sample-key"
-)
-
 func main() {
 	err := db.InitDB()
 	if err != nil {
 		fmt.Println("main.Run: can't init database ", err.Error())
-		return
-	}
-
-	// TODO временное решение, потом задавать через интерфейс
-	kp, err := message.KeyPairFromFile(pubKey, privKey, passphrase)
-	if err != nil {
-		fmt.Printf("main.Run: cannot create keypair from file: %s\n", err)
-		return
-	}
-	err = db.AddKeys([]*message.KeyPair{kp})
-	if err != nil {
-		fmt.Println("main.Run: cannot add keypair to db:", err)
 		return
 	}
 
