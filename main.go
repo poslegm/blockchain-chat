@@ -11,7 +11,6 @@ import (
 
 // TODO пока по умолчанию берётся просто первая пара ключей из массива
 // TODO получать из базы свой ключ
-// TODO сделать интерфейс для записи контактов
 // TODO сделать интерфейс для записи своей пары ключей
 // TODO сделать нормальное получение ip
 // TODO хранить отправленные сообщения в расшифрованном виде
@@ -29,6 +28,7 @@ func main() {
 		return
 	}
 
+	// TODO временное решение, потом задавать через интерфейс
 	kp, err := message.KeyPairFromFile(pubKey, privKey, passphrase)
 	if err != nil {
 		fmt.Printf("main.Run: cannot create keypair from file: %s\n", err)
