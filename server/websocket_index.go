@@ -41,7 +41,7 @@ func sendAllMessages() {
 	chatMessages := make([]ChatMessage, len(textMessages))
 	for i, textMsg := range textMessages {
 		chatMessages[i] = ChatMessage{
-			textMsg.Receiver, textMsg.Sender, textMsg.Text, false,
+			textMsg.Receiver, textMsg.Sender, textMsg.Text, textMsg.Time, false,
 		}
 	}
 
@@ -55,7 +55,7 @@ func sendAllMessages() {
 		}
 
 		chatMessages = append(chatMessages, ChatMessage{
-			textMsg.Receiver, textMsg.Sender, textMsg.Text, false,
+			textMsg.Receiver, textMsg.Sender, textMsg.Text, textMsg.Time, false,
 		})
 	}
 
@@ -94,6 +94,7 @@ func sendMessageToNetwork(msg WebSocketMessage) {
 		kp.GetBase58Address(),
 		chatMsg.Sender,
 		chatMsg.Text,
+		chatMsg.Time,
 		kp.PublicKey,
 	)
 
@@ -143,6 +144,7 @@ func saveMyMessage(chatMsg ChatMessage, kp *message.KeyPair) {
 		Receiver: kp.GetBase58Address(),
 		Sender:   chatMsg.Sender,
 		Text:     chatMsg.Text,
+		Time:     chatMsg.Time,
 	}})
 
 	if err != nil {

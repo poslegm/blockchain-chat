@@ -40,6 +40,7 @@ function sendMessage() {
             Receiver: receiver,
             Sender: PUBLIC_KEY,
             Text: text,
+            Time: Date.now(),
             NewPublicKey: newPublicKey
         }]
     }
@@ -164,6 +165,10 @@ function changeDialog(userKey) {
         $("#top-name").attr("name", userKey);
         $(".messages").empty();
         $("#receiver-key").remove();
+        dialogs[userKey].sort(function (a, b) {
+            if (parseInt(a['Time']) > parseInt(b['Time'])) return 1;
+            if (parseInt(a['Time']) < parseInt(b['Time'])) return -1;
+        });
         for (var i in dialogs[userKey]) {
             msg = dialogs[userKey][i];
             if (msg["Sender"] === PUBLIC_KEY) {

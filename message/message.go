@@ -9,14 +9,15 @@ type EncryptedMessage struct {
 	ReceiverAddress string
 
 	//encrypted message contents
-	DataLength      int
-	Data            []byte
+	DataLength int
+	Data       []byte
 }
 
 type TextMessage struct {
 	Receiver string
 	Sender   string
 	Text     string
+	Time     int64
 }
 
 func (msg EncryptedMessage) Decode(kp *KeyPair) (TextMessage, error) {
@@ -42,8 +43,8 @@ func (msg TextMessage) Encode(kp *KeyPair) (EncryptedMessage, error) {
 	}
 
 	return EncryptedMessage{
-		ReceiverAddress:kp.GetBase58Address(),
-		DataLength:len(encoded),
-		Data:encoded,
+		ReceiverAddress: kp.GetBase58Address(),
+		DataLength:      len(encoded),
+		Data:            encoded,
 	}, nil
 }

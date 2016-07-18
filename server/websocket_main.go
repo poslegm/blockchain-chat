@@ -64,6 +64,7 @@ func writeNetworkMessageToQueue(msg network.NetworkMessage) {
 				Receiver:     textMsg.Receiver,
 				Sender:       textMsg.Sender,
 				Text:         textMsg.Text,
+				Time:         textMsg.Time,
 				NewPublicKey: false,
 			}},
 		}

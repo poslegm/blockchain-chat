@@ -19,11 +19,12 @@ type NetworkMessage struct {
 	Data []byte
 }
 
-func CreateTextNetworkMessage(receiver, sender, text string, publicKey []byte) (NetworkMessage, error) {
+func CreateTextNetworkMessage(receiver, sender, text string, time int64, publicKey []byte) (NetworkMessage, error) {
 	textMessage := message.TextMessage{
 		Receiver: receiver,
 		Sender:   sender,
 		Text:     text,
+		Time:     time,
 	}
 
 	encrypted, err := textMessage.Encode(&message.KeyPair{publicKey, []byte{}, []byte{}})

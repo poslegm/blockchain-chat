@@ -21,6 +21,7 @@ type ChatMessage struct {
 	Receiver     string // хеш публичного ключа получателя или сам публичный ключ, если NewPublicKey == true
 	Sender       string // хеш публичного ключа отправителья
 	Text         string
+	Time         int64
 	NewPublicKey bool // true, если в получателя нет в контактах
 }
 

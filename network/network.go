@@ -26,7 +26,7 @@ func (n Node) send(msg NetworkMessage) (int, error) {
 		return -1, err
 	}
 	marshallMsg = append(marshallMsg, 4)
-	fmt.Println(marshallMsg)
+	fmt.Println("Sended: ", marshallMsg)
 	return n.tcp.Write(marshallMsg)
 }
 
@@ -194,8 +194,6 @@ func (networkUser *NetworkUser) setConnection(address string) {
 
 // рассылка сообщения по узлам
 func (network *NetworkUser) SendMessage(msg NetworkMessage) {
-	fmt.Printf("Network.SendMessage: %#v\n", msg)
-
 	network.OutgoingMessages <- msg
 
 	for k, node := range network.Nodes {
@@ -204,7 +202,7 @@ func (network *NetworkUser) SendMessage(msg NetworkMessage) {
 		go func() {
 			_, err := node.send(msg)
 			if err != nil {
-				fmt.Println("Error broadcasting to ", node.tcp.RemoteAddr())
+				fmt.Println("Error broadcasting ("+err.Error()+") to ", node.tcp.RemoteAddr())
 			}
 		}()
 	}
