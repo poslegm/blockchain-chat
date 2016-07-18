@@ -72,8 +72,8 @@ func TestKeys(t *testing.T) {
 	defer tCloseDB()
 
 	inKeys := []*message.KeyPair{
-		&message.KeyPair{[]byte("pubkey1"), []byte("privkey1"), []byte("passphrase")},
-		&message.KeyPair{[]byte("asdfkas"), []byte("1234234"), []byte("sdnfsj")},
+		{[]byte("pubkey1"), []byte("privkey1"), []byte("passphrase")},
+		{[]byte("asdfkas"), []byte("1234234"), []byte("sdnfsj")},
 	}
 	for _, v := range inKeys {
 		fmt.Println(v)
@@ -110,8 +110,8 @@ func TestContacts(t *testing.T) {
 	defer tCloseDB()
 
 	inContacts := []*message.KeyPair{
-		&message.KeyPair{[]byte("pubkey1"), nil, nil},
-		&message.KeyPair{[]byte("pubkey2"), nil, nil},
+		{[]byte("pubkey1"), nil, nil},
+		{[]byte("pubkey2"), nil, nil},
 	}
 
 	for _, v := range inContacts {
@@ -143,4 +143,28 @@ func TestContacts(t *testing.T) {
 		t.Fatal("contact wasn't found")
 	}
 	fmt.Println(outContact)
+}
+
+func TestTextMessages(t *testing.T) {
+	tInitDB()
+	defer tCloseDB()
+
+	inMessages := []message.TextMessage{
+		{"asd", "zxc", "vbnm"},
+		{"dsa", "cxz", "mnbv"},
+	}
+
+	err := AddTextMessages(inMessages)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	outMessages, err := GetAllTextMessages()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, v := range outMessages {
+		fmt.Println(v)
+	}
 }

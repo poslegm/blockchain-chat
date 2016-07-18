@@ -19,9 +19,10 @@ var (
 	blocks = []byte("blocks") //stored blockchain blocks
 	keys = []byte("keys") //user's encryption keys
 	contacts = []byte("contacts") //contact list
+	textMessages = []byte("textMessages")
 	baseName = "data.db" //database file name
 	testBaseName = "test.db" //database file name for testing
-	neededBuckets = [][]byte{knownAddresses, messages, blocks, keys, contacts} //needed buckets
+	neededBuckets = [][]byte{knownAddresses, messages, blocks, keys, contacts, textMessages} //needed buckets
 )
 
 //database initialization, creating top-level buckets if they are not present
@@ -263,6 +264,42 @@ func GetContactByAddress(address string) (kp *message.KeyPair, err error) {
 		err := json.Unmarshal(buf, kp)
 		if err != nil {
 			return fmt.Errorf("get contact by addrress unmarshal: %s", err)
+		}
+		return nil
+	})
+	return
+}
+
+func AddTextMessages(data []message.TextMessage) error {
+	return db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket(messages)
+		for _, v := range data {
+			buf, err := json.Marshal(v)
+			if err != nil {
+				return fmt.Errorf("add text messages marshal: %s", err)
+			}
+			bid, _ := b.NextSequence()
+			id := int(bid)
+			err = b.Put(itob(id), buf)
+			if err != nil {
+				return fmt.Errorf("add text messages db put: %s", err)
+			}
+		}
+		return nil
+	})
+}
+
+func GetAllTextMessages() (data []message.TextMessage, err error) {
+	err = db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(messages)
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			msg := message.TextMessage{}
+			terr := json.Unmarshal(v, &msg)
+			if terr != nil {
+				return fmt.Errorf("get all text messages unmarshal: %s", terr)
+			}
+			data = append(data, msg)
 		}
 		return nil
 	})
