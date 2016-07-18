@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	_ "golang.org/x/crypto/ripemd160"
 )
 
 const (
@@ -40,7 +41,7 @@ func TestGenerateKeyPair(t *testing.T) {
 
 	err = kp.SaveToFile("new-key")
 	if err != nil {
-		t.Fatal("save to file: %s", err)
+		t.Fatalf("save to file: %s", err)
 	}
 
 	nkp, err := KeyPairFromFile("new-key.pub", "new-key.priv", "new-key.pass")
@@ -48,6 +49,17 @@ func TestGenerateKeyPair(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println(nkp)
+
+	encoded, err := nkp.Encode([]byte("hello world!"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	decoded, err := nkp.Decode(encoded)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(string(decoded))
 	os.Remove("new-key.pub")
 	os.Remove("new-key.priv")
 	os.Remove("new-key.pass")
