@@ -1,12 +1,12 @@
 package server
 
 import (
-	"github.com/poslegm/blockchain-chat/network"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"github.com/poslegm/blockchain-chat/db"
 	"github.com/poslegm/blockchain-chat/message"
+	"github.com/poslegm/blockchain-chat/network"
 	"net/http"
-	"github.com/gorilla/websocket"
 )
 
 // выбирает ответ на сообщение в зависимости от типа и кладёт его в очередь сообщений
@@ -20,6 +20,8 @@ func switchTypes(msg WebSocketMessage) {
 		sendMessageToNetwork(msg)
 	case "GetMyKey":
 		sendPublicKey()
+	case "GetContacts":
+		sendContacts()
 	}
 }
 
@@ -45,7 +47,7 @@ func sendAllMessages() {
 		})
 	}
 
-	WebSocketQueue <- WebSocketMessage{Type:"AllMessages", Messages:chatMessages}
+	WebSocketQueue <- WebSocketMessage{Type: "AllMessages", Messages: chatMessages}
 }
 
 func sendMessageToNetwork(msg WebSocketMessage) {
@@ -91,9 +93,9 @@ func sendMessageToNetwork(msg WebSocketMessage) {
 
 	if chatMsg.NewPublicKey {
 		WebSocketQueue <- WebSocketMessage{
-			Type: "NewKeyHash",
-			Key: kp.GetBase58Address(),
-			Messages: []ChatMessage{chatMsg },
+			Type:     "NewKeyHash",
+			Key:      kp.GetBase58Address(),
+			Messages: []ChatMessage{chatMsg},
 		}
 	}
 }
@@ -103,8 +105,23 @@ func sendPublicKey() {
 	if err != nil {
 		fmt.Println("Websockets.switchTypes: can't send public key ", err.Error())
 	} else {
-		WebSocketQueue <- WebSocketMessage{Type:"Key", Key:string(publicKey)}
+		WebSocketQueue <- WebSocketMessage{Type: "Key", Key: string(publicKey)}
 	}
+}
+
+func sendContacts() {
+	contacts, err := db.GetAllContacts()
+	if err != nil {
+		fmt.Println("Websockets.sendContacts: can't get contacts from db ", err.Error())
+		return
+	}
+
+	contactsMessage := make([]string, len(contacts))
+	for i, contact := range contacts {
+		contactsMessage[i] = contact.GetBase58Address()
+	}
+
+	WebSocketQueue <- WebSocketMessage{Type: "AllContacts", Contacts: contactsMessage}
 }
 
 func createWSHandler() http.HandlerFunc {

@@ -2,7 +2,7 @@ var wsUrl = "ws://" + location.host + "/websocket";
 var socket = new WebSocket(wsUrl);
 
 var PUBLIC_KEY = "";
-var dialogs = {}
+var dialogs = {} // словарь, где ключ - это ключ собеседника, а значение - список сообщений
 var lazyMessages = [];
 
 socket.onopen = function() {
@@ -10,6 +10,7 @@ socket.onopen = function() {
         socket.send(JSON.stringify({ Type: "GetMyKey" }));
     }
     socket.send(JSON.stringify({ Type: "GetMessages" }));
+    socket.send(JSON.stringify({ Type: "GetContacts" }));
 };
 
 socket.onclose = function() {
@@ -69,6 +70,9 @@ socket.onmessage = function(event) {
         addNewDialog(message['Key'], message['Messages']);
         viewDialogs();
         changeDialog(message['Key']).call();
+    } else if (message['Type'] === 'AllContacts') {
+        console.log("ALL CONTACTS");
+        handleContacts(message['Contacts']);
     }
 };
 
@@ -91,6 +95,13 @@ function handlePublicKey(key) {
     console.log(PUBLIC_KEY);
 }
 
+function handleContacts(contacts) {
+    console.log(contacts);
+    contacts.forEach(function (o) {
+        dictAppend(dialogs, o, null);
+    });
+}
+
 $(document).ready(function() {
     $("#new-user").click(function () {
         $(".messages").empty();
@@ -103,11 +114,20 @@ $(document).ready(function() {
 });
 
 
-function dictAppend(dict, key, value) {
+function dictAppend(dict, key, value_nullable) {
+    // если значение null, то добавлять имеет смысл только пустой список
+    // в случае не существования словаря
+    if (value_nullable === null) {
+        if (dict[key] === undefined) {
+            dict[key] = [];
+        }
+        return
+    }
+
     if (dict[key] !== undefined) {
-        dict[key].push(value)
+        dict[key].push(value_nullable);
     } else {
-        dict[key] = [value]
+        dict[key] = [value_nullable];
     }
 }
 
