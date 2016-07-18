@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-// TODO хранить отправленные сообщения в расшифрованном виде
 func main() {
 	err := db.InitDB()
 	if err != nil {

@@ -25,6 +25,7 @@ func (n Node) send(msg NetworkMessage) (int, error) {
 		fmt.Println("Network.send: ", err.Error())
 		return -1, err
 	}
+	marshallMsg = append(marshallMsg, 4)
 	return n.tcp.Write(marshallMsg)
 }
 
@@ -80,6 +81,8 @@ func (node *Node) listen(networkUser *NetworkUser) {
 			break
 		}
 
+		fmt.Println(buffer)
+
 		msg := new(NetworkMessage)
 		err = json.Unmarshal(buffer, msg)
 		if err != nil {
@@ -91,6 +94,7 @@ func (node *Node) listen(networkUser *NetworkUser) {
 		case MESSAGE:
 			networkUser.IncomingMessages <- *msg
 		case REQUEST:
+			fmt.Println("REQUEST", msg)
 			networkUser.ConnectQueue <- msg.IP
 		}
 
@@ -104,6 +108,8 @@ func (node *Node) listenTCP() ([]byte, error) {
 
 	for {
 		n, err := node.tcp.Read(tmp)
+		fmt.Println(tmp)
+		fmt.Println(tmp[n-1])
 		if err != nil {
 			if err != io.EOF {
 				fmt.Println("Network.node.listen: ", err.Error())
@@ -112,6 +118,9 @@ func (node *Node) listenTCP() ([]byte, error) {
 			return nil, err
 		}
 		buffer = append(buffer, tmp[:n]...)
+		if tmp[n-1] == 4 {
+			break
+		}
 	}
 
 	return buffer, nil
@@ -140,6 +149,7 @@ func (networkUser *NetworkUser) listenTCPRequests() {
 
 		networkUser.addNode(&Node{connection, connection.RemoteAddr().String()})
 		networkUser.NewNodes <- connection.RemoteAddr().String()
+		// TODO возможно, по сети бесконечно будет летать это сообщение
 		go networkUser.SendMessage(NetworkMessage{
 			MessageType: REQUEST,
 			IP:          connection.RemoteAddr().String(),
