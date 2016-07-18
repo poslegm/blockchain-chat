@@ -1,21 +1,22 @@
 package message
 
 import (
+	"bytes"
+	"crypto/md5"
+	"fmt"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/maxwellhealth/go-gpg"
-	"bytes"
-	"fmt"
-	"io/ioutil"
 	"golang.org/x/crypto/openpgp"
-	"crypto/md5"
 	"golang.org/x/crypto/openpgp/armor"
+	_ "golang.org/x/crypto/ripemd160"
+	"io/ioutil"
 	"os"
 )
 
 //gpg key pair
 type KeyPair struct {
 	//gpg pub key
-	PublicKey  []byte
+	PublicKey []byte
 
 	//gpg private key
 	PrivateKey []byte
@@ -36,6 +37,8 @@ func (kp *KeyPair) Encode(data []byte) ([]byte, error) {
 	var outputBuffer bytes.Buffer
 
 	//encode
+	fmt.Println(string(kp.PublicKey))
+	fmt.Println(string(data))
 	err := gpg.Encode(kp.PublicKey, inputBuffer, &outputBuffer)
 	if err != nil {
 		return nil, fmt.Errorf("error encoding data: %s", err)
@@ -101,7 +104,7 @@ func KeyPairFromFile(publicKeyFile, privateKeyFile, passphrase string) (*KeyPair
 		}
 		passphrase = string(pass)
 	}
-	return &KeyPair{PrivateKey:priv, PublicKey:pub, Passphrase:[]byte(passphrase)}, nil
+	return &KeyPair{PrivateKey: priv, PublicKey: pub, Passphrase: []byte(passphrase)}, nil
 }
 
 func (kp *KeyPair) SaveToFile(name string) error {
