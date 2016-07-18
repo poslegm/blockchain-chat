@@ -9,6 +9,7 @@ import (
 	"github.com/poslegm/blockchain-chat/message"
 	"os"
 	"errors"
+	"strings"
 )
 
 var db *bolt.DB;
@@ -77,10 +78,13 @@ func GetKnownAddresses() (data []network.NetAddress, err error) {
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			addr := network.NetAddress{}
-			terr := json.Unmarshal(v, &addr)
-			if (terr != nil) {
+			terr := json.Unmarshal(v, &addr.Lastseen)
+			if terr != nil {
 				return fmt.Errorf("get known adrresses unmarshal: %s", terr)
 			}
+			s := strings.Split(string(k[:]), ":")
+			addr.Ip = s[0]
+			addr.Port = s[1]
 			data = append(data, addr)
 		}
 		return nil
@@ -100,13 +104,12 @@ func AddKnownAddresses(data []network.NetAddress) error {
 	return db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(knownAddresses)
 		for _, v := range data {
-			buf, err := json.Marshal(v)
+			bufK := []byte(v.Ip + ":" + v.Port)
+			buf, err := json.Marshal(v.Lastseen)
 			if err != nil {
 				return fmt.Errorf("add known addresses marshal: %s", err)
 			}
-			bid, _ := b.NextSequence()
-			id := int(bid)
-			err = b.Put(itob(id), buf)
+			err = b.Put(bufK, buf)
 			if err != nil {
 				return fmt.Errorf("add known addresses db put: %s", err)
 			}
