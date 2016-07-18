@@ -5,16 +5,22 @@ import (
 	"github.com/poslegm/blockchain-chat/db"
 	"github.com/poslegm/blockchain-chat/network"
 	"github.com/poslegm/blockchain-chat/server"
+	"io/ioutil"
+	"strings"
 	"time"
 )
 
-// TODO сделать нормальное получение ip
 // TODO хранить отправленные сообщения в расшифрованном виде
-
 func main() {
 	err := db.InitDB()
 	if err != nil {
 		fmt.Println("main.Run: can't init database ", err.Error())
+		return
+	}
+	// временное решение, возможно, потом добавить возможность добавять адреса через клиент
+	err = addIPAddressesToDB()
+	if err != nil {
+		fmt.Println("main.Run: can't add ip addresses to db ", err.Error())
 		return
 	}
 
@@ -24,7 +30,6 @@ func main() {
 		return
 	} else if len(keyPairs) == 0 {
 		fmt.Println("main.Run: there is no key pairs in db")
-		return
 	}
 
 	err = network.Run(keyPairs)
@@ -67,4 +72,24 @@ func handleNetworkChans() {
 			db.AddMessages([]network.NetworkMessage{msg})
 		}
 	}
+}
+
+func addIPAddressesToDB() error {
+	addresses, err := ioutil.ReadFile("ips.txt")
+	if err != nil {
+		return err
+	}
+	if len(addresses) == 0 {
+		return nil
+	}
+
+	splitted := strings.Split(string(addresses), "\n")
+	networkAddresses := make([]network.NetAddress, len(splitted))
+
+	for i, addr := range splitted {
+		networkAddresses[i] = network.NetAddress{Ip: addr, Port: network.TCPPort}
+	}
+	db.AddKnownAddresses(networkAddresses)
+
+	return nil
 }
