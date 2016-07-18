@@ -28,11 +28,23 @@ func switchTypes(msg WebSocketMessage) {
 func sendAllMessages() {
 	networkMessages, err := db.GetAllMessages()
 	if err != nil {
-		fmt.Println("Websockets.switchTypes: ", err.Error())
+		fmt.Println("Websockets.switchTypes: can't get network messages ", err.Error())
 		return
 	}
-	fmt.Println(networkMessages)
-	chatMessages := make([]ChatMessage, 0)
+	textMessages, err := db.GetAllTextMessages()
+	if err != nil {
+		fmt.Println("Websockets.switchTypes: can't get text messages ", err.Error())
+		return
+	}
+
+	// отправляются свои сообщения и те, которые можно расшифровать
+	chatMessages := make([]ChatMessage, len(textMessages))
+	for i, textMsg := range textMessages {
+		chatMessages[i] = ChatMessage{
+			textMsg.Receiver, textMsg.Sender, textMsg.Text, false,
+		}
+	}
+
 	for _, networkMsg := range networkMessages {
 		textMsg, err := networkMsg.AsTextMessage()
 		if err != nil {
@@ -98,6 +110,8 @@ func sendMessageToNetwork(msg WebSocketMessage) {
 			Messages: []ChatMessage{chatMsg},
 		}
 	}
+
+	saveMyMessage(chatMsg, kp)
 }
 
 func sendPublicKey() {
@@ -122,6 +136,18 @@ func sendContacts() {
 	}
 
 	WebSocketQueue <- WebSocketMessage{Type: "AllContacts", Contacts: contactsMessage}
+}
+
+func saveMyMessage(chatMsg ChatMessage, kp *message.KeyPair) {
+	err := db.AddTextMessages([]message.TextMessage{{
+		Receiver: kp.GetBase58Address(),
+		Sender:   chatMsg.Sender,
+		Text:     chatMsg.Text,
+	}})
+
+	if err != nil {
+		fmt.Println("websockets.SaveMyMessage: can't save message ", err.Error())
+	}
 }
 
 func createWSHandler() http.HandlerFunc {

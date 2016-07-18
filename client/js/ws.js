@@ -100,6 +100,7 @@ function handleContacts(contacts) {
     contacts.forEach(function (o) {
         dictAppend(dialogs, o, null);
     });
+    viewDialogs();
 }
 
 $(document).ready(function() {

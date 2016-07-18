@@ -1,15 +1,15 @@
 package server
 
 import (
-	"github.com/gorilla/websocket"
 	"fmt"
-	"time"
+	"github.com/gorilla/websocket"
 	"github.com/poslegm/blockchain-chat/network"
+	"time"
 )
 
 var WebSocketQueue = make(chan WebSocketMessage)
 
-func receive(ws *websocket.Conn, handle func (m WebSocketMessage)) {
+func receive(ws *websocket.Conn, handle func(m WebSocketMessage)) {
 	// чтение не должно прекращаться
 	ws.SetReadDeadline(time.Time{})
 
@@ -59,18 +59,18 @@ func writeNetworkMessageToQueue(msg network.NetworkMessage) {
 		return
 	} else {
 		WebSocketQueue <- WebSocketMessage{
-			Type:"NewMessage",
-			Messages:[]ChatMessage{{
-				Receiver: textMsg.Receiver,
-				Sender: textMsg.Sender,
-				Text: textMsg.Text,
+			Type: "NewMessage",
+			Messages: []ChatMessage{{
+				Receiver:     textMsg.Receiver,
+				Sender:       textMsg.Sender,
+				Text:         textMsg.Text,
 				NewPublicKey: false,
 			}},
 		}
 	}
 }
 
-func createConnection(ws *websocket.Conn, handle func (m WebSocketMessage)) {
+func createConnection(ws *websocket.Conn, handle func(m WebSocketMessage)) {
 	go receive(ws, handle)
 	go handleMessagesQueue(ws)
 }
