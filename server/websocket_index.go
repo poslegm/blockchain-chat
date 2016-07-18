@@ -76,7 +76,7 @@ func sendMessageToNetwork(msg WebSocketMessage) {
 		}
 	}
 
-	kp, err := db.GetKeyByAddress(chatMsg.Receiver)
+	kp, err := db.GetContactByAddress(chatMsg.Receiver)
 
 	if chatMsg.NewPublicKey {
 		kp = &message.KeyPair{[]byte(chatMsg.Receiver), []byte{}, []byte{}}

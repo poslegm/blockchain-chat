@@ -58,7 +58,7 @@ func handleNetworkChans() {
 	for {
 		select {
 		case msg := <-network.CurrentNetworkUser.IncomingMessages:
-			fmt.Println(msg)
+			fmt.Println("handleNetworkChans: ", msg)
 			db.AddMessages([]network.NetworkMessage{msg})
 		case address := <-network.CurrentNetworkUser.NewNodes:
 			db.AddKnownAddresses([]network.NetAddress{{

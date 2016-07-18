@@ -26,6 +26,7 @@ func (n Node) send(msg NetworkMessage) (int, error) {
 		return -1, err
 	}
 	marshallMsg = append(marshallMsg, 4)
+	fmt.Println(marshallMsg)
 	return n.tcp.Write(marshallMsg)
 }
 
@@ -75,55 +76,58 @@ func currentUserRemoveNode(node *Node) {
 // слушает сообщения от указанного узла и пишет их в базу
 func (node *Node) listen(networkUser *NetworkUser) {
 	for {
-		buffer, err := node.listenTCP()
+		buffers, err := node.listenTCP()
 
 		if err == io.EOF {
 			break
 		}
 
-		fmt.Println(buffer)
-
-		msg := new(NetworkMessage)
-		err = json.Unmarshal(buffer, msg)
-		if err != nil {
-			fmt.Println("Network.node.listen: ", err.Error())
-			continue
+		messages := make([]*NetworkMessage, 0)
+		for _, buffer := range buffers {
+			msg := new(NetworkMessage)
+			err = json.Unmarshal(buffer, msg)
+			if err != nil {
+				fmt.Println("Network.node.listen: ", err.Error())
+				continue
+			}
+			messages = append(messages, msg)
 		}
 
-		switch msg.MessageType {
-		case MESSAGE:
-			networkUser.IncomingMessages <- *msg
-		case REQUEST:
-			fmt.Println("REQUEST", msg)
-			networkUser.ConnectQueue <- msg.IP
+		for _, msg := range messages {
+			switch msg.MessageType {
+			case MESSAGE:
+				fmt.Println("WRITED: ", *msg)
+				networkUser.IncomingMessages <- *msg
+			case REQUEST:
+				fmt.Println("REQUEST", msg)
+				networkUser.ConnectQueue <- msg.IP
+			}
 		}
-
 	}
 }
 
 // запись одного сообщения по TCP в буфер (вспомогательная процедура)
-func (node *Node) listenTCP() ([]byte, error) {
+func (node *Node) listenTCP() ([][]byte, error) {
 	buffer := make([]byte, 4096)
-	tmp := make([]byte, 256)
 
-	for {
-		n, err := node.tcp.Read(tmp)
-		fmt.Println(tmp)
-		fmt.Println(tmp[n-1])
-		if err != nil {
-			if err != io.EOF {
-				fmt.Println("Network.node.listen: ", err.Error())
-				currentUserRemoveNode(node)
-			}
-			return nil, err
+	_, err := node.tcp.Read(buffer)
+	if err != nil {
+		if err != io.EOF {
+			fmt.Println("Network.node.listen: ", err.Error())
+			currentUserRemoveNode(node)
 		}
-		buffer = append(buffer, tmp[:n]...)
-		if tmp[n-1] == 4 {
-			break
-		}
+		return nil, err
 	}
 
-	return buffer, nil
+	messages := make([][]byte, 0)
+	sep := 0
+	for i, c := range buffer {
+		if c == 4 {
+			messages = append(messages, buffer[sep:i])
+			sep = i + 1
+		}
+	}
+	return messages, nil
 }
 
 // прослушивает tcp на предмет запросов на подключение
@@ -147,6 +151,7 @@ func (networkUser *NetworkUser) listenTCPRequests() {
 			return
 		}
 
+		//if networkUser.Nodes[connection.RemoteAddr().String()]
 		networkUser.addNode(&Node{connection, connection.RemoteAddr().String()})
 		networkUser.NewNodes <- connection.RemoteAddr().String()
 		// TODO возможно, по сети бесконечно будет летать это сообщение

@@ -3,9 +3,9 @@ package network
 import (
 	"encoding/json"
 
-	"github.com/poslegm/blockchain-chat/message"
 	"errors"
 	"fmt"
+	"github.com/poslegm/blockchain-chat/message"
 )
 
 const MESSAGE = "MESSAGE"
@@ -14,16 +14,16 @@ const REQUEST = "REQUEST"
 type NetworkMessage struct {
 	MessageType string
 	// заполняется, если messageType == REQUEST, содержит адрес, к которому пытается подключиться
-	IP          string
+	IP string
 
-	Data        []byte
+	Data []byte
 }
 
 func CreateTextNetworkMessage(receiver, sender, text string, publicKey []byte) (NetworkMessage, error) {
 	textMessage := message.TextMessage{
-		Receiver:receiver,
-		Sender:sender,
-		Text:text,
+		Receiver: receiver,
+		Sender:   sender,
+		Text:     text,
 	}
 
 	encrypted, err := textMessage.Encode(&message.KeyPair{publicKey, []byte{}, []byte{}})
@@ -34,7 +34,7 @@ func CreateTextNetworkMessage(receiver, sender, text string, publicKey []byte) (
 
 	encryptedBytes, err := json.Marshal(encrypted)
 
-	return NetworkMessage{MessageType:MESSAGE, Data:encryptedBytes}, err
+	return NetworkMessage{MessageType: MESSAGE, Data: encryptedBytes}, err
 }
 
 func (msg NetworkMessage) AsTextMessage() (message.TextMessage, error) {
@@ -42,7 +42,6 @@ func (msg NetworkMessage) AsTextMessage() (message.TextMessage, error) {
 		return message.TextMessage{}, errors.New(
 			"network_message.asTextMessage: not encrypted messages " + msg.MessageType)
 	}
-
 	encrypted := message.EncryptedMessage{}
 	err := json.Unmarshal(msg.Data, &encrypted)
 	if err != nil {
@@ -51,6 +50,7 @@ func (msg NetworkMessage) AsTextMessage() (message.TextMessage, error) {
 
 	for _, kp := range CurrentNetworkUser.KeyPairs {
 		if encrypted.ReceiverAddress == kp.GetBase58Address() {
+			fmt.Println("DECODING...")
 			return encrypted.Decode(kp)
 		}
 	}
