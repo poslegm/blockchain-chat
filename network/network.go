@@ -1,12 +1,13 @@
 package network
 
 import (
-	"fmt"
-	"net"
-	"io"
 	"encoding/json"
-	"os"
+	"fmt"
 	"github.com/poslegm/blockchain-chat/message"
+	"io"
+	"net"
+	"net/http"
+	"os"
 )
 
 const TCPPort string = "9005"
@@ -15,6 +16,7 @@ type Node struct {
 	tcp *net.TCPConn
 	key string // TCP address
 }
+
 // TODO покрыть тестами
 
 func (n Node) send(msg NetworkMessage) (int, error) {
@@ -27,16 +29,17 @@ func (n Node) send(msg NetworkMessage) (int, error) {
 }
 
 type NetworkUser struct {
-	Nodes            map[string]*Node    // контакты
+	Nodes            map[string]*Node // контакты
 	Address          string
 	ConnectQueue     chan string         // очередь на отправку запросов соединения
 	IncomingMessages chan NetworkMessage // входящие для добавления в базу
 	OutgoingMessages chan NetworkMessage
-	NewNodes         chan string         // адреса новых соединений для добавления в базу
+	NewNodes         chan string // адреса новых соединений для добавления в базу
 	KeyPairs         []*message.KeyPair
 }
 
 var CurrentNetworkUser *NetworkUser = new(NetworkUser)
+
 // создаёт объект для обработчика сети
 func setupNetwork(address string, kps []*message.KeyPair) *NetworkUser {
 	networkUser := new(NetworkUser)
@@ -85,8 +88,10 @@ func (node *Node) listen(networkUser *NetworkUser) {
 		}
 
 		switch msg.MessageType {
-		case MESSAGE: networkUser.IncomingMessages <- *msg
-		case REQUEST: networkUser.ConnectQueue <- msg.IP
+		case MESSAGE:
+			networkUser.IncomingMessages <- *msg
+		case REQUEST:
+			networkUser.ConnectQueue <- msg.IP
 		}
 
 	}
@@ -116,28 +121,28 @@ func (node *Node) listenTCP() ([]byte, error) {
 func (networkUser *NetworkUser) listenTCPRequests() {
 	address, err := net.ResolveTCPAddr("tcp4", networkUser.Address)
 	if err != nil {
-		fmt.Println("Network.listenTCPRequests: ", err.Error())
+		fmt.Println("Network.listenTCPRequests: can't resolve addr", err.Error())
 		return
 	}
 
 	listener, err := net.ListenTCP("tcp4", address)
 	if err != nil {
-		fmt.Println("Network.listenTCPRequests: ", err.Error())
+		fmt.Println("Network.listenTCPRequests: can't listen tcp ", err.Error())
 		return
 	}
 
 	for {
 		connection, err := listener.AcceptTCP()
 		if err != nil {
-			fmt.Println("Network.listenTCPRequests: ", err.Error())
+			fmt.Println("Network.listenTCPRequests: can't accept tcp ", err.Error())
 			return
 		}
 
 		networkUser.addNode(&Node{connection, connection.RemoteAddr().String()})
 		networkUser.NewNodes <- connection.RemoteAddr().String()
 		go networkUser.SendMessage(NetworkMessage{
-			MessageType:REQUEST,
-			IP:connection.RemoteAddr().String(),
+			MessageType: REQUEST,
+			IP:          connection.RemoteAddr().String(),
 		})
 	}
 }
@@ -190,6 +195,7 @@ func (network *NetworkUser) SendMessage(msg NetworkMessage) {
 	}
 }
 
+// получает текущий локальный ip
 func currentAddress() (string, error) {
 	name, err := os.Hostname()
 	if err != nil {
@@ -206,7 +212,7 @@ func currentAddress() (string, error) {
 		for i, addr := range address {
 			binAddr := net.ParseIP(addr).To4()
 
-			if (binAddr != nil && len(binAddr) == 4) {
+			if binAddr != nil && len(binAddr) == 4 {
 				addrId = i
 				break
 			}
@@ -216,10 +222,31 @@ func currentAddress() (string, error) {
 	return address[addrId] + ":" + TCPPort, nil
 }
 
+// получает текущий глобальный ip, используя сервис Амазона
+func currentGlobalAddress() (string, error) {
+	resp, err := http.Get("http://checkip.amazonaws.com")
+	if err != nil {
+		return "", err
+	}
+
+	address := make([]byte, 20)
+	n, err := resp.Body.Read(address)
+	if err != nil && err != io.EOF {
+		return "", err
+	}
+	address = address[:n-1] // n - 1, потому что на конце стоит символ переноса строки
+
+	addressString := string(address)
+	addressString += ":" + TCPPort
+	fmt.Println("Network.currentAddress: address ", addressString, n)
+
+	return addressString, nil
+}
+
 func Run(kps []*message.KeyPair) error {
 	address, err := currentAddress()
 	if err != nil {
-		fmt.Println("Network.Run: ", err.Error())
+		fmt.Println("Network.Run: can't get current IP address ", err.Error())
 		fmt.Println("Can't create network")
 		return err
 	}

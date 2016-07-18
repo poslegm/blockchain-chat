@@ -1,30 +1,14 @@
 package server
 
 import (
-	"net/http"
-	"io/ioutil"
-	"path"
 	"fmt"
 	"github.com/gorilla/mux"
-	"path/filepath"
+	"io/ioutil"
 	"mime"
+	"net/http"
+	"path"
+	"path/filepath"
 )
-
-func createIndexHandler(rootDir string) http.HandlerFunc {
-	return func(resp http.ResponseWriter, req *http.Request) {
-		resp.Header().Add("Content-Type", "text/html")
-
-		content, err := ioutil.ReadFile(path.Join(rootDir, "index.html"))
-		if err != nil || content == nil {
-			fmt.Println(err.Error())
-			resp.WriteHeader(404)
-			resp.Write([]byte{})
-			return
-		}
-
-		resp.Write(content)
-	}
-}
 
 func createPageHandler(rootDir string) http.HandlerFunc {
 	return func(resp http.ResponseWriter, req *http.Request) {

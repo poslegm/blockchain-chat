@@ -6,9 +6,10 @@ import (
 )
 
 type WebSocketMessage struct {
-	Type       string
-	Messages   []ChatMessage
-	Key        string
+	Type     string
+	Messages []ChatMessage
+	Key      string
+	Contacts []string
 
 	// для добавление новой пары ключей
 	PublicKey  string
@@ -17,15 +18,15 @@ type WebSocketMessage struct {
 }
 
 type ChatMessage struct {
-	Receiver     string
-	Sender       string
+	Receiver     string // хеш публичного ключа получателя или сам публичный ключ, если NewPublicKey == true
+	Sender       string // хеш публичного ключа отправителья
 	Text         string
-	NewPublicKey bool
+	NewPublicKey bool // true, если в получателя нет в контактах
 }
 
 func (msg ChatMessage) addNewPublicKeyToDb() error {
 	return db.AddContacts([]*message.KeyPair{{
-		PublicKey: []byte(msg.Receiver),
+		PublicKey:  []byte(msg.Receiver),
 		PrivateKey: []byte{},
 		Passphrase: []byte{},
 	}})
