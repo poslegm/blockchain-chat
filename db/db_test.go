@@ -65,6 +65,21 @@ func TestAddresses(t *testing.T) {
 	for _, v := range outAddresses {
 		fmt.Println(v)
 	}
+
+	inAddresses[0].Ip = "123.234.123"
+	err = AddKnownAddresses(inAddresses)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	outAddresses, err = GetKnownAddresses()
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println()
+	for _, v := range outAddresses {
+		fmt.Println(v)
+	}
 }
 
 func TestKeys(t *testing.T) {
