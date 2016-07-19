@@ -209,6 +209,7 @@ function addNewMessagesToViews(messages) {
             if (o['Sender'] === PUBLIC_KEY) {
                 addNewMessage(true, o['Receiver'], o);
             } else {
+                console.log(o['Sender']);
                 addNewMessage(false, o['Sender'], o);
             }
         }
@@ -216,7 +217,10 @@ function addNewMessagesToViews(messages) {
 }
 
 function addNewMessage(my, user, message) {
-    if ($("#top-name").val() === user) {
+    console.log(user);
+    console.log(message);
+    console.log($("#top-name").val());
+    if ($("#top-name").html() === user) {
         appendMessage(my, user, message['Text'])
     } else {
         $("#dialog-" + user).find("div.user").attr("style", "font-weight:bold");
