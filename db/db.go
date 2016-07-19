@@ -275,7 +275,7 @@ func GetContactByAddress(address string) (kp *message.KeyPair, err error) {
 
 func AddTextMessages(data []message.TextMessage) error {
 	return db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket(messages)
+		b := tx.Bucket(textMessages)
 		for _, v := range data {
 			buf, err := json.Marshal(v)
 			if err != nil {
@@ -294,7 +294,7 @@ func AddTextMessages(data []message.TextMessage) error {
 
 func GetAllTextMessages() (data []message.TextMessage, err error) {
 	err = db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket(messages)
+		b := tx.Bucket(textMessages)
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			msg := message.TextMessage{}
