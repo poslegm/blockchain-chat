@@ -28,7 +28,7 @@ function sendMessageKeys() {
     publicKey = $('#publicKey').val();
     privateKey = $('#privateKey').val();
     passphrase = $('#passphrase').val();
-    if (publicKey === "" || privateKey === "" || passphrase === "") {
+    if (publicKey === "" || privateKey === "") {
         return
     }
 

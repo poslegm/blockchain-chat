@@ -63,6 +63,7 @@ func handleNetworkChans() {
 		select {
 		case msg := <-network.CurrentNetworkUser.IncomingMessages:
 			fmt.Println("handleNetworkChans: ", msg)
+			server.WriteMessageToWebSocketQueue(msg)
 			db.AddMessages([]network.NetworkMessage{msg})
 		case address := <-network.CurrentNetworkUser.NewNodes:
 			db.AddKnownAddresses([]network.NetAddress{{
@@ -71,7 +72,7 @@ func handleNetworkChans() {
 				network.TCPPort,
 			}})
 		case msg := <-network.CurrentNetworkUser.OutgoingMessages:
-			fmt.Println(msg)
+			fmt.Println("Added in handle network chans: ", msg)
 			db.AddMessages([]network.NetworkMessage{msg})
 		}
 	}

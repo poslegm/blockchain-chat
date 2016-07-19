@@ -32,8 +32,6 @@ func handleMessagesQueue(ws *websocket.Conn) {
 		select {
 		case msg := <-WebSocketQueue:
 			writeMessageToWS(msg, ws)
-		case msg := <-network.CurrentNetworkUser.IncomingMessages:
-			writeNetworkMessageToQueue(msg)
 		}
 	}
 }
@@ -50,7 +48,7 @@ func writeMessageToWS(msg WebSocketMessage, ws *websocket.Conn) {
 	}
 }
 
-func writeNetworkMessageToQueue(msg network.NetworkMessage) {
+func WriteMessageToWebSocketQueue(msg network.NetworkMessage) {
 	textMsg, err := msg.AsTextMessage()
 	if err != nil {
 		if err.Error() != "unsuitable-pair" {

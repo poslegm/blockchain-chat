@@ -90,6 +90,7 @@ func (node *Node) listen(networkUser *NetworkUser) {
 				fmt.Println("Network.node.listen: ", err.Error())
 				continue
 			}
+			fmt.Println("UNMARSHALED: ", msg)
 			messages = append(messages, msg)
 		}
 
