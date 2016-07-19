@@ -1,2 +1,4 @@
 .idea/
 *.db
+ips.txt
+message/byte.msg
