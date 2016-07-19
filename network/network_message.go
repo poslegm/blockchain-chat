@@ -10,6 +10,7 @@ import (
 
 const MESSAGE = "MESSAGE"
 const REQUEST = "REQUEST"
+const BLOCK = "BLOCK"
 
 type NetworkMessage struct {
 	MessageType string
