@@ -127,15 +127,28 @@ func AddMessages(data []network.NetworkMessage) error {
 			if err != nil {
 				return fmt.Errorf("add messages marshal: %s", err)
 			}
-			bid, _ := b.NextSequence()
-			id := int(bid)
-			err = b.Put(itob(id), buf)
+			key := network.Hash(buf)
+			err = b.Put(key[:], buf)
 			if err != nil {
 				return fmt.Errorf("add messages db put: %s", err)
 			}
 		}
 		return nil
 	})
+}
+
+func HasMessage(msg network.NetworkMessage) (ret bool, err error) {
+	err = db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(messages)
+		buf, err := json.Marshal(msg)
+		if err != nil {
+			return fmt.Errorf("has message marshak: %s", err)
+		}
+		key := network.Hash(buf)
+		ret = b.Get(key[:]) != nil
+		return nil
+	})
+	return
 }
 
 //get stored messages

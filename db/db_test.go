@@ -24,9 +24,8 @@ func TestMessages(t *testing.T) {
 	defer tCloseDB()
 
 	inMsgs := []network.NetworkMessage{
-		//network.CreateTextNetworkMessage("123", "345", "678"),
-		//network.CreateTextNetworkMessage("asd", "fgh", "jkl"),
-		//network.CreateTextNetworkMessage("zxc", "vbn", "nmm"),
+		{"123", "asd", nil},
+		{"asd", "get", nil},
 	}
 
 	err := AddMessages(inMsgs)
@@ -35,6 +34,24 @@ func TestMessages(t *testing.T) {
 	}
 
 	outMsgs, err := GetAllMessages()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, v := range outMsgs {
+		fmt.Println(v)
+	}
+
+	has, err := HasMessage(inMsgs[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(has)
+	err = AddMessages(inMsgs[0:0])
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	outMsgs, err = GetAllMessages()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -165,8 +182,8 @@ func TestTextMessages(t *testing.T) {
 	defer tCloseDB()
 
 	inMessages := []message.TextMessage{
-		{"asd", "zxc", "vbnm"},
-		{"dsa", "cxz", "mnbv"},
+		{},
+		{},
 	}
 
 	err := AddTextMessages(inMessages)

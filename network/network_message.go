@@ -2,6 +2,7 @@ package network
 
 import (
 	"encoding/json"
+	"crypto/md5"
 
 	"errors"
 	"fmt"
@@ -19,6 +20,8 @@ type NetworkMessage struct {
 
 	Data []byte
 }
+
+const Hash = md5.Sum
 
 func CreateTextNetworkMessage(receiver, sender, text string, time int64, publicKey []byte) (NetworkMessage, error) {
 	textMessage := message.TextMessage{
