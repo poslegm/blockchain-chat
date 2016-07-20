@@ -99,6 +99,7 @@ func (node *Node) listen(networkUser *NetworkUser) {
 			case MESSAGE:
 				fmt.Println("WRITED: ", *msg)
 				networkUser.IncomingMessages <- *msg
+			//	TODO проверять наличие сообщения в базе; если его нет, то рассылать дальше
 			case REQUEST:
 				fmt.Println("REQUEST", msg)
 				networkUser.ConnectQueue <- msg.IP

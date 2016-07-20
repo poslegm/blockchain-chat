@@ -63,7 +63,7 @@ func handleNetworkChans() {
 		select {
 		case msg := <-network.CurrentNetworkUser.IncomingMessages:
 			fmt.Println("handleNetworkChans: ", msg)
-			server.WriteMessageToWebSocketQueue(msg)
+			sendToClient(msg)
 			db.AddMessages([]network.NetworkMessage{msg})
 		case address := <-network.CurrentNetworkUser.NewNodes:
 			db.AddKnownAddresses([]network.NetAddress{{
@@ -96,4 +96,16 @@ func addIPAddressesToDB() error {
 	db.AddKnownAddresses(networkAddresses)
 
 	return nil
+}
+
+func sendToClient(msg network.NetworkMessage) {
+	hasMsg, err := db.HasMessage(msg)
+	if err != nil {
+		fmt.Println("main.sendToClient: can't send message to ws ", err.Error())
+		return
+	}
+	// если сообщение уже есть в базе, то оно уже было отправлено на клиент
+	if !hasMsg {
+		server.WriteMessageToWebSocketQueue(msg)
+	}
 }
