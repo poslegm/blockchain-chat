@@ -6,7 +6,6 @@ import (
 	"github.com/poslegm/blockchain-chat/message"
 	"io"
 	"net"
-	"net/http"
 	"os"
 )
 
@@ -153,14 +152,16 @@ func (networkUser *NetworkUser) listenTCPRequests() {
 			return
 		}
 
-		//if networkUser.Nodes[connection.RemoteAddr().String()]
 		networkUser.addNode(&Node{connection, connection.RemoteAddr().String()})
 		networkUser.NewNodes <- connection.RemoteAddr().String()
-		// TODO возможно, по сети бесконечно будет летать это сообщение
-		go networkUser.SendMessage(NetworkMessage{
+
+		msg := NetworkMessage{
 			MessageType: REQUEST,
 			IP:          connection.RemoteAddr().String(),
-		})
+		}
+
+		networkUser.OutgoingMessages <- msg
+		go networkUser.SendMessage(msg)
 	}
 }
 
@@ -196,7 +197,6 @@ func (networkUser *NetworkUser) setConnection(address string) {
 
 // рассылка сообщения по узлам
 func (network *NetworkUser) SendMessage(msg NetworkMessage) {
-	network.OutgoingMessages <- msg
 
 	for k, node := range network.Nodes {
 		fmt.Println("Broadcasting...", k)
@@ -233,29 +233,8 @@ func currentAddress() (string, error) {
 			}
 		}
 	}
-	fmt.Println("Network.currentAddress: address ", address[addrId])
+	fmt.Println("Network.currentAddress: address ", address[addrId]+":"+TCPPort)
 	return address[addrId] + ":" + TCPPort, nil
-}
-
-// получает текущий глобальный ip, используя сервис Амазона
-func currentGlobalAddress() (string, error) {
-	resp, err := http.Get("http://checkip.amazonaws.com")
-	if err != nil {
-		return "", err
-	}
-
-	address := make([]byte, 20)
-	n, err := resp.Body.Read(address)
-	if err != nil && err != io.EOF {
-		return "", err
-	}
-	address = address[:n-1] // n - 1, потому что на конце стоит символ переноса строки
-
-	addressString := string(address)
-	addressString += ":" + TCPPort
-	fmt.Println("Network.currentAddress: address ", addressString, n)
-
-	return addressString, nil
 }
 
 func Run(kps []*message.KeyPair) error {

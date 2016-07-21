@@ -101,6 +101,7 @@ func sendMessageToNetwork(msg WebSocketMessage) {
 	if err != nil {
 		fmt.Println("Websockets.switchTypes: can't send message ", err.Error())
 	} else {
+		network.CurrentNetworkUser.OutgoingMessages <- networkMsg
 		go network.CurrentNetworkUser.SendMessage(networkMsg)
 	}
 

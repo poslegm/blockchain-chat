@@ -43,7 +43,6 @@ func main() {
 
 	go createConnectQueue()
 	go handleNetworkChans()
-
 	server.Run("./client", "8080")
 }
 
@@ -62,7 +61,6 @@ func handleNetworkChans() {
 	for {
 		select {
 		case msg := <-network.CurrentNetworkUser.IncomingMessages:
-			fmt.Println("handleNetworkChans: ", msg)
 			sendToClient(msg)
 			db.AddMessages([]network.NetworkMessage{msg})
 		case address := <-network.CurrentNetworkUser.NewNodes:
@@ -72,7 +70,6 @@ func handleNetworkChans() {
 				network.TCPPort,
 			}})
 		case msg := <-network.CurrentNetworkUser.OutgoingMessages:
-			fmt.Println("Added in handle network chans: ", msg)
 			db.AddMessages([]network.NetworkMessage{msg})
 		}
 	}
@@ -107,5 +104,6 @@ func sendToClient(msg network.NetworkMessage) {
 	// если сообщение уже есть в базе, то оно уже было отправлено на клиент
 	if !hasMsg {
 		server.WriteMessageToWebSocketQueue(msg)
+		network.CurrentNetworkUser.SendMessage(msg)
 	}
 }
