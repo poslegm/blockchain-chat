@@ -18,15 +18,11 @@ type Node struct {
 
 // TODO покрыть тестами
 
-func (n Node) send(msg NetworkMessage) (int, error) {
-	marshallMsg, err := json.Marshal(msg)
-	if err != nil {
-		fmt.Println("Network.send: ", err.Error())
-		return -1, err
-	}
-	marshallMsg = append(marshallMsg, 4)
-	fmt.Println("Sended: ", marshallMsg)
-	return n.tcp.Write(marshallMsg)
+func (n Node) send(msg NetworkMessage) error {
+	encoder := json.NewEncoder(n.tcp)
+
+	fmt.Println("Sended: ", msg)
+	return encoder.Encode(msg)
 }
 
 type NetworkUser struct {
@@ -75,60 +71,39 @@ func currentUserRemoveNode(node *Node) {
 // слушает сообщения от указанного узла и пишет их в базу
 func (node *Node) listen(networkUser *NetworkUser) {
 	for {
-		buffers, err := node.listenTCP()
+		message, err := node.listenTCP()
 
 		if err == io.EOF {
 			break
+		} else if err != nil {
+			fmt.Println("network.listen: can't receive message ", err.Error())
+			return
 		}
 
-		messages := make([]*NetworkMessage, 0)
-		for _, buffer := range buffers {
-			msg := new(NetworkMessage)
-			err = json.Unmarshal(buffer, msg)
-			if err != nil {
-				fmt.Println("Network.node.listen: ", err.Error())
-				continue
-			}
-			fmt.Println("UNMARSHALED: ", msg)
-			messages = append(messages, msg)
-		}
+		fmt.Println("network.listen: received ", *message)
 
-		for _, msg := range messages {
-			switch msg.MessageType {
-			case MESSAGE:
-				fmt.Println("WRITED: ", *msg)
-				networkUser.IncomingMessages <- *msg
-			//	TODO проверять наличие сообщения в базе; если его нет, то рассылать дальше
-			case REQUEST:
-				fmt.Println("REQUEST", msg)
-				networkUser.ConnectQueue <- msg.IP
-			}
+		switch message.MessageType {
+		case MESSAGE:
+			fmt.Println("WRITED: ", *message)
+			networkUser.IncomingMessages <- *message
+		case REQUEST:
+			fmt.Println("REQUEST", *message)
+			networkUser.ConnectQueue <- message.IP
 		}
 	}
 }
 
 // запись одного сообщения по TCP в буфер (вспомогательная процедура)
-func (node *Node) listenTCP() ([][]byte, error) {
-	buffer := make([]byte, 4096)
+func (node *Node) listenTCP() (*NetworkMessage, error) {
+	decoder := json.NewDecoder(node.tcp)
 
-	_, err := node.tcp.Read(buffer)
+	msg := new(NetworkMessage)
+	err := decoder.Decode(msg)
 	if err != nil {
-		if err != io.EOF {
-			fmt.Println("Network.node.listen: ", err.Error())
-			currentUserRemoveNode(node)
-		}
-		return nil, err
+		fmt.Println("network.listenTCP: can't decode message ", err.Error())
+		currentUserRemoveNode(node)
 	}
-
-	messages := make([][]byte, 0)
-	sep := 0
-	for i, c := range buffer {
-		if c == 4 {
-			messages = append(messages, buffer[sep:i])
-			sep = i + 1
-		}
-	}
-	return messages, nil
+	return msg, err
 }
 
 // прослушивает tcp на предмет запросов на подключение
@@ -202,7 +177,7 @@ func (network *NetworkUser) SendMessage(msg NetworkMessage) {
 		fmt.Println("Broadcasting...", k)
 
 		go func() {
-			_, err := node.send(msg)
+			err := node.send(msg)
 			if err != nil {
 				fmt.Println("Error broadcasting ("+err.Error()+") to ", node.tcp.RemoteAddr())
 			}
