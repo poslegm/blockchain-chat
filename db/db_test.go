@@ -177,15 +177,22 @@ func TestContacts(t *testing.T) {
 	fmt.Println(outContact)
 }
 
+func makeTextMessages() []message.TextMessage {
+	msgs := []message.TextMessage{{}, {}, {}}
+	msgs[0].Sender = "send1"
+	msgs[1].Sender = "send2"
+	msgs[2].Sender = "send3"
+	return msgs
+}
+
 func TestTextMessages(t *testing.T) {
 	tInitDB()
 	defer tCloseDB()
 
-	inMessages := []message.TextMessage{
-		{},
-		{},
+	inMessages := makeTextMessages()
+	for i := 0; i < len(inMessages); i++ {
+		inMessages[i].Mine()
 	}
-
 	err := AddTextMessages(inMessages)
 	if err != nil {
 		t.Fatal(err)
@@ -197,6 +204,21 @@ func TestTextMessages(t *testing.T) {
 	}
 
 	for _, v := range outMessages {
-		fmt.Println(v)
+		ver, err := v.Verify()
+		if err != nil {
+			t.Fatal(err)
+		}
+		fmt.Println(v, " ", ver)
+	}
+	for i := 0; i < len(inMessages); i++ {
+		msg, err := GetTextMessagesBySender(inMessages[len(inMessages) - 1 - i].Sender)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ver, err := msg[0].Verify()
+		if err != nil {
+			t.Fatal(err)
+		}
+		fmt.Println(msg, " ", ver, "\n")
 	}
 }

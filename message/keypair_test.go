@@ -31,6 +31,7 @@ func TestKeyPair(t *testing.T) {
 		t.Fatalf("kp decode error: %s", err)
 	}
 	fmt.Println(string(decoded))
+	os.Remove("byte.msg")
 }
 
 func TestGenerateKeyPair(t *testing.T) {

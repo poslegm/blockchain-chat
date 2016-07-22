@@ -37,8 +37,8 @@ func (kp *KeyPair) Encode(data []byte) ([]byte, error) {
 	var outputBuffer bytes.Buffer
 
 	//encode
-	fmt.Println(string(kp.PublicKey))
-	fmt.Println(string(data))
+	//fmt.Println(string(kp.PublicKey))
+	//fmt.Println(string(data))
 	err := gpg.Encode(kp.PublicKey, inputBuffer, &outputBuffer)
 	if err != nil {
 		return nil, fmt.Errorf("error encoding data: %s", err)
@@ -181,6 +181,6 @@ func GenerateKeyPair(name, comment, email, passphrase string) (*KeyPair, error) 
 		return nil, fmt.Errorf("cannot write public key: %s", err)
 	}
 
-	fmt.Println(kp)
+	//fmt.Println(kp)
 	return kp, nil
 }

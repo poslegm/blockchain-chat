@@ -290,13 +290,17 @@ func AddTextMessages(data []message.TextMessage) error {
 	return db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(textMessages)
 		for _, v := range data {
+			b2, err := b.CreateBucketIfNotExists([]byte(v.Sender))
+			if err != nil {
+				return fmt.Errorf("add text messages bucket: %s", err)
+			}
 			buf, err := json.Marshal(v)
 			if err != nil {
 				return fmt.Errorf("add text messages marshal: %s", err)
 			}
-			bid, _ := b.NextSequence()
-			id := int(bid)
-			err = b.Put(itob(id), buf)
+			//bid, _ := b.NextSequence()
+			//id := int(bid)
+			err = b2.Put(v.MessageHash[:], buf)
 			if err != nil {
 				return fmt.Errorf("add text messages db put: %s", err)
 			}
@@ -309,11 +313,36 @@ func GetAllTextMessages() (data []message.TextMessage, err error) {
 	err = db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(textMessages)
 		c := b.Cursor()
+		for k, _ := c.First(); k != nil; k, _ = c.Next() {
+			b2 := b.Bucket(k)
+			c2 := b2.Cursor()
+			for k2, v := c2.First(); k2 != nil; k2, v = c2.Next() {
+				msg := message.TextMessage{}
+				terr := json.Unmarshal(v, &msg)
+				if terr != nil {
+					return fmt.Errorf("get all text messages unmarshal: %s", terr)
+				}
+				data = append(data, msg)
+			}
+		}
+		return nil
+	})
+	return
+}
+
+func GetTextMessagesBySender(sender string) (data []message.TextMessage, err error) {
+	err = db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(textMessages)
+		b2 := b.Bucket([]byte(sender))
+		if b2 == nil {
+			return nil
+		}
+		c := b2.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			msg := message.TextMessage{}
-			terr := json.Unmarshal(v, &msg)
-			if terr != nil {
-				return fmt.Errorf("get all text messages unmarshal: %s", terr)
+			err = json.Unmarshal(v, &msg)
+			if err != nil {
+				return  fmt.Errorf("get text messages by sender unmarshal: %s", err)
 			}
 			data = append(data, msg)
 		}
