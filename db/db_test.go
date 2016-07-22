@@ -221,4 +221,16 @@ func TestTextMessages(t *testing.T) {
 		}
 		fmt.Println(msg, " ", ver, "\n")
 	}
+	msg := message.TextMessage{}
+	msg.Sender = inMessages[0].Sender
+	msg.Text = "last"
+	err = AddTextMessages([]message.TextMessage{msg})
+	if err != nil {
+		t.Fatal(err)
+	}
+	msg, err = GetLastTextMessageFromSender(inMessages[0].Sender)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(msg)
 }

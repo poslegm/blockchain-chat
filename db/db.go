@@ -298,9 +298,9 @@ func AddTextMessages(data []message.TextMessage) error {
 			if err != nil {
 				return fmt.Errorf("add text messages marshal: %s", err)
 			}
-			//bid, _ := b.NextSequence()
-			//id := int(bid)
-			err = b2.Put(v.MessageHash[:], buf)
+			bid, _ := b.NextSequence()
+			id := int(bid)
+			err = b2.Put(itob(id), buf)
 			if err != nil {
 				return fmt.Errorf("add text messages db put: %s", err)
 			}
@@ -345,6 +345,24 @@ func GetTextMessagesBySender(sender string) (data []message.TextMessage, err err
 				return  fmt.Errorf("get text messages by sender unmarshal: %s", err)
 			}
 			data = append(data, msg)
+		}
+		return nil
+	})
+	return
+}
+
+func GetLastTextMessageFromSender(sender string) (msg message.TextMessage, err error) {
+	err = db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(textMessages)
+		b2 := b.Bucket([]byte(sender))
+		if b2 == nil {
+			return nil
+		}
+		c := b2.Cursor()
+		_, v := c.Last()
+		err = json.Unmarshal(v, &msg)
+		if err != nil {
+			return fmt.Errorf("get last message unmarsha: %s", err)
 		}
 		return nil
 	})
