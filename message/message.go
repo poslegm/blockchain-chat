@@ -1,10 +1,10 @@
 package message
 
 import (
-	"encoding/json"
-	"github.com/poslegm/blockchain-chat/shahash"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
+	"github.com/poslegm/blockchain-chat/shahash"
 )
 
 type EncryptedMessage struct {
@@ -22,11 +22,11 @@ type TextMessage struct {
 	Text     string
 	Time     int64
 
-	ParentHash shahash.ShaHash
+	ParentHash  shahash.ShaHash
 	MessageHash shahash.ShaHash
 
 	Height int64
-	Nonce int64
+	Nonce  int64
 }
 
 func itob(v int64) []byte {
@@ -50,15 +50,20 @@ func (msg *TextMessage) Mine() (err error) {
 	if err != nil {
 		return fmt.Errorf("mining error: %s", err)
 	}
+	fmt.Println("Mining...")
 	for !msg.MessageHash.Check() {
 		msg.Nonce++
-		buf = append(buf[:len(buf) - 8], itob(msg.Nonce)...)
+		buf = append(buf[:len(buf)-8], itob(msg.Nonce)...)
 		msg.MessageHash, err = shahash.ShaHashFromData(buf)
 		if err != nil {
 			return fmt.Errorf("mining error: %s", err)
 		}
 	}
 	return nil
+}
+
+func GenerateParentHash(parent TextMessage) (shahash.ShaHash, error) {
+	return shahash.ShaHashFromData(parent.toByteArray())
 }
 
 func (msg TextMessage) Verify() (bool, error) {

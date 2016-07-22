@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/poslegm/blockchain-chat/message"
+	"github.com/poslegm/blockchain-chat/shahash"
 )
 
 const MESSAGE = "MESSAGE"
@@ -23,12 +24,32 @@ type NetworkMessage struct {
 
 var Hash = md5.Sum
 
-func CreateTextNetworkMessage(receiver, sender, text string, time int64, publicKey []byte) (NetworkMessage, error) {
+func CreateTextNetworkMessage(receiver, sender, text string,
+	time int64, publicKey []byte, parent *message.TextMessage) (NetworkMessage, error) {
+	var (
+		parentHash shahash.ShaHash = shahash.ShaHash{}
+		err        error           = nil
+	)
+	if parent != nil {
+		parentHash, err = message.GenerateParentHash(*parent)
+		if err != nil {
+			fmt.Println("network_message.CreateTextNetworkMessage: can't generate parent hash ", err.Error())
+			return NetworkMessage{}, err
+		}
+	}
+
 	textMessage := message.TextMessage{
-		Receiver: receiver,
-		Sender:   sender,
-		Text:     text,
-		Time:     time,
+		Receiver:   receiver,
+		Sender:     sender,
+		Text:       text,
+		Time:       time,
+		ParentHash: parentHash,
+	}
+
+	err = textMessage.Mine()
+	if err != nil {
+		fmt.Println("network_message.CreateTextNetworkMessage: can't mine ", err.Error())
+		return NetworkMessage{}, err
 	}
 
 	encrypted, err := textMessage.Encode(&message.KeyPair{publicKey, []byte{}, []byte{}})
@@ -56,8 +77,24 @@ func (msg NetworkMessage) AsTextMessage() (message.TextMessage, error) {
 	for _, kp := range CurrentNetworkUser.KeyPairs {
 		if encrypted.ReceiverAddress == kp.GetBase58Address() {
 			fmt.Println("DECODING...")
-			return encrypted.Decode(kp)
+			txtMsg, err := encrypted.Decode(kp)
+			if err != nil {
+				return message.TextMessage{}, err
+			} else {
+				return verify(txtMsg)
+			}
 		}
 	}
 	return message.TextMessage{}, errors.New("unsuitable-pair")
+}
+
+func verify(textMsg message.TextMessage) (message.TextMessage, error) {
+	verified, err := textMsg.Verify()
+	if verified {
+		fmt.Println("VERIFIED")
+		return textMsg, err
+	} else {
+		fmt.Println("NOT VERIFIED")
+		return message.TextMessage{}, err
+	}
 }

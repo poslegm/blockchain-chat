@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/poslegm/blockchain-chat/db"
@@ -64,7 +65,7 @@ func sendAllMessages() {
 
 func sendMessageToNetwork(msg WebSocketMessage) {
 	if len(msg.Messages) != 1 {
-		fmt.Printf("WebSocket.switchTypes: incorrect message - %#v\n", msg)
+		fmt.Printf("websockets_index.sendMessageToNetwork: incorrect message - %#v\n", msg)
 		return
 	}
 	chatMsg := msg.Messages[0]
@@ -72,7 +73,7 @@ func sendMessageToNetwork(msg WebSocketMessage) {
 	if chatMsg.NewPublicKey {
 		err := chatMsg.addNewPublicKeyToDb()
 		if err != nil {
-			fmt.Println("Websocket.swithTypes: can't add new public key ", err.Error())
+			fmt.Println("websockets_index.sendMessageToNetwork: can't add new public key ", err.Error())
 		}
 	}
 
@@ -83,11 +84,16 @@ func sendMessageToNetwork(msg WebSocketMessage) {
 	}
 
 	if err != nil {
-		fmt.Println("WebSockets.swithTypes: can't get kp from db ", err.Error())
+		fmt.Println("websockets_index.sendMessageToNetwork: can't get kp from db ", err.Error())
 		return
 	} else if kp == nil {
-		fmt.Println("WebSockets.swithTypes: there is no kp in db")
+		fmt.Println("websockets_index.sendMessageToNetwork: there is no kp in db")
 		return
+	}
+
+	parent, err := getLastMessageInDialog(chatMsg.Receiver, chatMsg.Sender)
+	if err != nil {
+		fmt.Println("websockets_index.sendMessageToNetwork: can't get parent ", err.Error())
 	}
 
 	networkMsg, err := network.CreateTextNetworkMessage(
@@ -96,10 +102,11 @@ func sendMessageToNetwork(msg WebSocketMessage) {
 		chatMsg.Text,
 		chatMsg.Time,
 		kp.PublicKey,
+		parent,
 	)
 
 	if err != nil {
-		fmt.Println("Websockets.switchTypes: can't send message ", err.Error())
+		fmt.Println("websockets_index.sendMessageToNetwork: can't send message ", err.Error())
 	} else {
 		network.CurrentNetworkUser.OutgoingMessages <- networkMsg
 		go network.CurrentNetworkUser.SendMessage(networkMsg)
@@ -114,6 +121,29 @@ func sendMessageToNetwork(msg WebSocketMessage) {
 	}
 
 	saveMyMessage(chatMsg, kp)
+}
+
+func getLastMessageInDialog(talker1 string, talker2 string) (*message.TextMessage, error) {
+	last1, err := db.GetLastTextMessageFromSender(talker1)
+	if err != nil {
+		fmt.Println("websocket_index.getLastMessageInDialog: can't get last msg ", err.Error())
+		return nil, err
+	}
+	last2, err := db.GetLastTextMessageFromSender(talker2)
+	if err != nil {
+		fmt.Println("websocket_index.getLastMessageInDialog: can't get last msg ", err.Error())
+		return nil, err
+	}
+
+	if last1.Time == 0 && last2.Time == 0 {
+		return nil, errors.New("No parent")
+	}
+
+	if last1.Time > last2.Time {
+		return &last1, nil
+	} else {
+		return &last2, nil
+	}
 }
 
 func sendPublicKey() {
