@@ -16,8 +16,6 @@ type Node struct {
 	key string // TCP address
 }
 
-// TODO покрыть тестами
-
 func (n Node) send(msg NetworkMessage) error {
 	encoder := json.NewEncoder(n.tcp)
 
@@ -101,6 +99,7 @@ func (node *Node) listenTCP() (*NetworkMessage, error) {
 	err := decoder.Decode(msg)
 	if err != nil {
 		fmt.Println("network.listenTCP: can't decode message ", err.Error())
+		fmt.Println(msg)
 		currentUserRemoveNode(node)
 	}
 	return msg, err
@@ -159,7 +158,7 @@ func (networkUser *NetworkUser) setConnection(address string) {
 		fmt.Println("Network.setConnection: ", err.Error())
 		return
 	}
-	// TODO возможно, заморочиться с таймаутами на соединение
+
 	connection, err := net.DialTCP("tcp", nil, tcpAddress)
 	if err != nil {
 		fmt.Println("Network.setConnection: ", err.Error())

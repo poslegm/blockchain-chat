@@ -12,7 +12,6 @@ import (
 
 const MESSAGE = "MESSAGE"
 const REQUEST = "REQUEST"
-const BLOCK = "BLOCK"
 
 type NetworkMessage struct {
 	MessageType string
@@ -51,7 +50,7 @@ func CreateTextNetworkMessage(receiver, sender, text string,
 		fmt.Println("network_message.CreateTextNetworkMessage: can't mine ", err.Error())
 		return NetworkMessage{}, err
 	}
-
+	fmt.Println("PRE-SEND: ", textMessage)
 	encrypted, err := textMessage.Encode(&message.KeyPair{publicKey, []byte{}, []byte{}})
 	if err != nil {
 		fmt.Println("network_message.CreateTextNetworkMessage: ", err.Error())
