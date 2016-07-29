@@ -1,5 +1,5 @@
 install:
-	go get ./...
+	touch ips.txt
 
 run:
 	go run main.go
